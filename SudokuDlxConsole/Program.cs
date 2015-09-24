@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using DlxLib;
@@ -33,12 +34,13 @@ namespace SudokuDlxConsole
 
         private static Grid Solve(Grid grid)
         {
-            var dlxRows = BuildDlxRowsForGrid(grid);
+            var internalRows = BuildInternalRowsForGrid(grid);
+            var dlxRows = BuildDlxRows(internalRows);
 
             var dlx = new Dlx();
             var solution = dlx.Solve(dlxRows, d => d, r => r).First();
 
-            var rcvs = solution.RowIndexes.Select(rowIndex => dlxRows[rowIndex]).Select(DlxRowToRowColValue);
+            var rcvs = solution.RowIndexes.Select(rowIndex => internalRows[rowIndex]);
             var sortedRcvs = rcvs.OrderBy(t => t.Item1).ThenBy(t => t.Item2).ToList();
 
             var rowStrings = Enumerable.Range(0, 9)
@@ -47,34 +49,43 @@ namespace SudokuDlxConsole
             return new Grid(rowStrings.ToImmutableList());
         }
 
-        private static IImmutableList<IImmutableList<int>> BuildDlxRowsForGrid(Grid grid)
+        private static IImmutableList<Tuple<int, int, int, bool>> BuildInternalRowsForGrid(Grid grid)
         {
             return (
                 from row in Enumerable.Range(0, 9)
                 from col in Enumerable.Range(0, 9)
                 let value = grid.ValueAt(row, col)
-                select BuildDlxRowsForSquare(row, col, value))
+                select BuildInternalRowsForCell(row, col, value))
                 .SelectMany(x => x).ToImmutableList();
         }
 
-        private static IImmutableList<IImmutableList<int>> BuildDlxRowsForSquare(int row, int col, int value)
+        private static IImmutableList<Tuple<int, int, int, bool>> BuildInternalRowsForCell(int row, int col, int value)
         {
             if (value >= 1 && value <= 9)
-            {
-                return new[] { BuildDlxRow(row, col, value) }.ToImmutableList();
-            }
+                return ImmutableList.Create(Tuple.Create(row, col, value, true));
 
-            return Enumerable.Range(1, 9).Select(n => BuildDlxRow(row, col, n)).ToImmutableList();
+            return Enumerable.Range(1, 9).Select(n => Tuple.Create(row, col, n, false)).ToImmutableList();
         }
 
-        private static IImmutableList<int> BuildDlxRow(int row, int col, int value)
+        private static IImmutableList<IImmutableList<int>> BuildDlxRows(IEnumerable<Tuple<int, int, int, bool>> internalRows)
         {
+            return internalRows.Select(BuildDlxRow).ToImmutableList();
+        }
+
+        private static IImmutableList<int> BuildDlxRow(Tuple<int, int, int, bool> internalRow)
+        {
+            var row = internalRow.Item1;
+            var col = internalRow.Item2;
+            var value = internalRow.Item3;
+
+            var zeroBasedValue = value - 1;
             var box = RowColToBox(row, col);
-            var rowCol = Encode(row, col);
-            var rowVal = Encode(row, value - 1);
-            var colVal = Encode(col, value - 1);
-            var boxVal = Encode(box, value - 1);
-            return ImmutableList.Create(rowCol, rowVal, colVal, boxVal).SelectMany(arr => arr).ToImmutableList();
+
+            var rowVals = Encode(row, zeroBasedValue);
+            var colVals = Encode(col, zeroBasedValue);
+            var boxVals = Encode(box, zeroBasedValue);
+
+            return ImmutableList.Create(rowVals, colVals, boxVals).SelectMany(arr => arr).ToImmutableList();
         }
 
         private static int RowColToBox(int row, int col)
@@ -87,26 +98,6 @@ namespace SudokuDlxConsole
             var result = new int[81];
             result[major * 9 + minor] = 1;
             return result.ToImmutableList();
-        }
-
-        private static Tuple<int, int, int> DlxRowToRowColValue(IImmutableList<int> dlxRow)
-        {
-            var rowCol = dlxRow.Take(81).ToImmutableList();
-            var rowVal = dlxRow.Skip(81).Take(81).ToImmutableList();
-            var tuple1 = Decode(rowCol);
-            var tuple2 = Decode(rowVal);
-            var row = tuple1.Item1;
-            var col = tuple1.Item2;
-            var value = tuple2.Item2;
-            return Tuple.Create(row, col, value + 1);
-        }
-
-        private static Tuple<int, int> Decode(IImmutableList<int> dlxRow)
-        {
-            var position = dlxRow.IndexOf(1);
-            var minor = position % 9;
-            var major = position / 9;
-            return Tuple.Create(major, minor);
         }
     }
 }
