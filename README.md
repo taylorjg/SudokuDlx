@@ -15,3 +15,5 @@ I have leaned heavily on the code listed below by [Alex Rudnick](https://code.go
 
 * [Automatic Sudoku Solving with Dancing Links](https://code.google.com/p/narorumo/wiki/SudokuDLX)
 * [sudoku.py](https://code.google.com/p/narorumo/source/browse/trunk/sudokusolver/sudokudlx/sudoku.py)
+    * (_seems to be missing now_)
+    * Try [here](https://github.com/Jacob33123/narorumo/blob/master/sudokusolver/sudokudlx/sudoku.py) instead ?
