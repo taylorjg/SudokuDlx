@@ -106,7 +106,9 @@ namespace SudokuDlxConsole
             return result.ToImmutableList();
         }
 
-        private static bool VerifySolution(IReadOnlyList<Tuple<int, int, int, bool>> internalRows, Solution solution)
+        private static bool VerifySolution(
+            IReadOnlyList<Tuple<int, int, int, bool>> internalRows,
+            Solution solution)
         {
             var solutionInternalRows = solution.RowIndexes
                 .Select(rowIndex => internalRows[rowIndex])
@@ -162,26 +164,21 @@ namespace SudokuDlxConsole
             IReadOnlyList<Tuple<int, int, int, bool>> internalRows,
             Solution solution)
         {
-            var solutionInternalRows = solution.RowIndexes
+            var rowStrings = solution.RowIndexes
                 .Select(rowIndex => internalRows[rowIndex])
                 .OrderBy(t => t.Item1)
-                .ThenBy(t => t.Item2);
-
-            var rowStrings = Rows.Select(row =>
-                string.Concat(solutionInternalRows
-                    .Skip(row*9)
-                    .Take(9)
-                    .Select(t => t.Item3)));
-
-            return new Grid(rowStrings.ToImmutableList());
+                .ThenBy(t => t.Item2)
+                .GroupBy(t => t.Item1, t => t.Item3)
+                .Select(value => string.Concat(value))
+                .ToImmutableList();
+            return new Grid(rowStrings);
         }
 
         private static void DrawSolution(
             IReadOnlyList<Tuple<int, int, int, bool>> internalRows,
             Solution solution)
         {
-            var grid = SolutionToGrid(internalRows, solution);
-            grid.Draw();
+            SolutionToGrid(internalRows, solution).Draw();
         }
     }
 }
