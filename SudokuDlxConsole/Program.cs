@@ -35,7 +35,7 @@ namespace SudokuDlxConsole
 
             if (solutions.Any())
             {
-                Console.WriteLine($"Solution (1 of {solutions.Count}):");
+                Console.WriteLine($"First solution (of {solutions.Count}):");
                 Console.WriteLine();
                 DrawSolution(internalRows, solutions.First());
                 Console.WriteLine();
