@@ -120,6 +120,8 @@
     </None>
     <AppDesigner Include="Properties\" />
     <EmbeddedResource Include="SamplePuzzles\DailyTelegraph27744.json" />
+    <EmbeddedResource Include="SamplePuzzles\7Sudoku20160506.json" />
+    <EmbeddedResource Include="SamplePuzzles\DailyTelegraphWorldsHardestSudoku.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

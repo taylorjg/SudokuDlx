@@ -16,17 +16,19 @@ namespace SudokuDlxWpf.View
         private readonly List<InternalRow> _currentInternalsRows = new List<InternalRow>();
         private readonly DispatcherTimer _timer = new DispatcherTimer();
         private readonly Queue<IImmutableList<InternalRow>> _searchSteps = new Queue<IImmutableList<InternalRow>>();
+        private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
+        private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
 
         public MainWindow()
         {
             InitializeComponent();
 
             _timer.Tick += (_, __) => OnTick();
-            _timer.Interval = TimeSpan.FromMilliseconds(100);
+            _timer.Interval = TimeSpan.FromMilliseconds(10);
 
             ContentRendered += (_, __) =>
             {
-                var puzzle = PuzzleFactory.CreatePuzzleFromJsonResource("SudokuDlxWpf.SamplePuzzles.DailyTelegraph27744.json");
+                var puzzle = PuzzleFactory.CreatePuzzleFromJsonResource("DailyTelegraphWorldsHardestSudoku.json");
 
                 _bc = BoardControl;
                 _bc.Initialise();
@@ -61,17 +63,22 @@ namespace SudokuDlxWpf.View
                 return;
             }
 
+            AdjustDisplayedDigits(internalRows);
+        }
+
+        private void AdjustDisplayedDigits(IEnumerable<InternalRow> internalRows)
+        {
             var newInternalRows = internalRows.Where(x => !x.IsInitialValue).ToImmutableList();
 
-            _currentInternalsRows.Except(newInternalRows, new SameCoordsComparer())
+            _currentInternalsRows.Except(newInternalRows, _sameCoordsComparer)
                 .ToList()
                 .ForEach(RemoveInternalRow);
 
-            newInternalRows.Except(_currentInternalsRows, new SameCoordsComparer())
+            newInternalRows.Except(_currentInternalsRows, _sameCoordsComparer)
                 .ToList()
                 .ForEach(AddInternalRow);
 
-            newInternalRows.Intersect(_currentInternalsRows, new SameCoordsDifferentValueComparer())
+            newInternalRows.Intersect(_currentInternalsRows, _sameCoordsDifferentValueComparer)
                 .ToList()
                 .ForEach(ChangeInternalRow);
         }
@@ -126,7 +133,7 @@ namespace SudokuDlxWpf.View
                 return x.Coords.Equals(y.Coords) && x.Value != y.Value;
             }
 
-            public int GetHashCode(InternalRow obj)
+            public int GetHashCode(InternalRow _)
             {
                 return 0;
             }

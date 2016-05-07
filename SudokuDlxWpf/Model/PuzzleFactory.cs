@@ -14,9 +14,10 @@ namespace SudokuDlxWpf.Model
         public static Puzzle CreatePuzzleFromJsonResource(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            string fullResourceName = $"SudokuDlxWpf.SamplePuzzles.{resourceName}";
+            using (var stream = assembly.GetManifestResourceStream(fullResourceName))
             {
-                if (stream == null) throw new ApplicationException($"Failed to load resource {resourceName}");
+                if (stream == null) throw new ApplicationException($"Failed to load resource {fullResourceName}");
                 return CreatePuzzleFromStream(stream);
             }
         }

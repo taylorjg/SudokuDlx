@@ -18,22 +18,6 @@ namespace SudokuDlxWpf.View
         private double _sw;
         private double _sh;
 
-        private class DigitTag
-        {
-            public FrameworkElement FrameworkElement { get; }
-            public Coords Coords { get; }
-            public int Value { get; }
-            public bool IsInitialValue { get; }
-
-            public DigitTag(FrameworkElement frameworkElement, Coords coords, int value, bool isInitialValue)
-            {
-                FrameworkElement = frameworkElement;
-                Coords = coords;
-                Value = value;
-                IsInitialValue = isInitialValue;
-            }
-        }
-
         public BoardControl()
         {
             InitializeComponent();
@@ -66,34 +50,32 @@ namespace SudokuDlxWpf.View
         {
             Canvas.Children
                 .OfType<FrameworkElement>()
-                .Where(fe => fe.Tag is DigitTag)
-                .Where(fe => ((DigitTag)fe.Tag).Coords.Equals(coords))
+                .Where(fe => fe.Tag is Coords)
+                .Where(fe => ((Coords)fe.Tag).Equals(coords))
                 .ToList()
                 .ForEach(fe => Canvas.Children.Remove(fe));
         }
 
         private void AddDigit(Coords coords, int value, bool isInitialValue)
         {
-            // http://stackoverflow.com/questions/17828417/centering-text-vertically-and-horizontally-in-textblock-and-passwordbox-in-windo
+            var digitColour = isInitialValue ? Colors.Red : Colors.Black;
 
             var textBlock = new TextBlock
             {
                 Text = Convert.ToString(value),
                 FontSize = 48,
-                Foreground = new SolidColorBrush(Colors.Black),
+                Foreground = new SolidColorBrush(digitColour),
                 Opacity = isInitialValue ? 0.6 : 1.0,
-                TextAlignment = TextAlignment.Center
+                TextAlignment = TextAlignment.Center,
             };
 
             var border = new Border
             {
                 Width = _sw,
                 Height = _sh,
-                Child = textBlock
+                Child = textBlock,
+                Tag = coords
             };
-
-            var tag = new DigitTag(border, coords, value, isInitialValue);
-            border.Tag = tag;
 
             Canvas.SetLeft(border, coords.Col * _sw + GridLineHalfThickness);
             Canvas.SetTop(border, coords.Row * _sh + GridLineHalfThickness);
@@ -141,7 +123,7 @@ namespace SudokuDlxWpf.View
         {
             Canvas.Children
                 .OfType<FrameworkElement>()
-                .Where(fe => fe.Tag is DigitTag)
+                .Where(fe => fe.Tag is Coords)
                 .ToList()
                 .ForEach(fe => Canvas.Children.Remove(fe));
         }
