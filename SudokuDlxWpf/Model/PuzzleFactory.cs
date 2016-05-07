@@ -17,15 +17,20 @@ namespace SudokuDlxWpf.Model
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
                 if (stream == null) throw new ApplicationException($"Failed to load resource {resourceName}");
-                var jsonSerializer = new JsonSerializer();
-                using (var streamReader = new StreamReader(stream))
-                using (var jsonTextReader = new JsonTextReader(streamReader))
-                {
-                    var puzzleData = jsonSerializer.Deserialize<dynamic>(jsonTextReader);
-                    var rowStrings = (JArray)puzzleData["rowStrings"];
-                    var initialValues = RowStringsToInitialValues(rowStrings);
-                    return new Puzzle(initialValues);
-                }
+                return CreatePuzzleFromStream(stream);
+            }
+        }
+
+        private static Puzzle CreatePuzzleFromStream(Stream stream)
+        {
+            var jsonSerializer = new JsonSerializer();
+            using (var streamReader = new StreamReader(stream))
+            using (var jsonTextReader = new JsonTextReader(streamReader))
+            {
+                var puzzleData = jsonSerializer.Deserialize<dynamic>(jsonTextReader);
+                var rowStrings = (JArray)puzzleData["rowStrings"];
+                var initialValues = RowStringsToInitialValues(rowStrings);
+                return new Puzzle(initialValues);
             }
         }
 
