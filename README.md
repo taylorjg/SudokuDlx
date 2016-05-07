@@ -9,7 +9,13 @@ I have leaned heavily on the code listed below by [Alex Rudnick](https://code.go
 
 ## Screenshot
 
-![Screenshot](https://raw.github.com/taylorjg/SudokuDlx/master/Images/Screenshot.png)
+### Console App
+
+![Console Screenshot](https://raw.github.com/taylorjg/SudokuDlx/master/Images/Screenshot.png)
+
+### WPF App
+
+![WPF Screenshot](https://raw.github.com/taylorjg/SudokuDlx/master/Images/ScreenshotWpf.png)
 
 ## Links
 
