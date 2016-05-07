@@ -1,7 +1,7 @@
-﻿<Window x:Class="SudokuDlxWpf.MainWindow"
+﻿<Window x:Class="SudokuDlxWpf.View.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:view="clr-namespace:SudokuDlxWpf"
+        xmlns:view="clr-namespace:SudokuDlxWpf.View"
         Title="Sudoku Solver"
         Height="600"
         Width="600">
@@ -9,7 +9,7 @@
     <Window.Background>
         <VisualBrush TileMode="Tile" Viewport="0,0,0.2,0.2">
             <VisualBrush.Visual>
-                <Image Source="Assets\Pattern - Apple Wood@2x.png" />
+                <Image Source="..\Assets\Pattern - Apple Wood@2x.png" />
             </VisualBrush.Visual>
         </VisualBrush>
     </Window.Background>
