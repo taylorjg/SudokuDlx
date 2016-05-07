@@ -71,7 +71,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Compile Include="Extensions\SynchronizationContextExtensions.cs" />
     <Compile Include="Model\InitialValue.cs" />
+    <Compile Include="Model\InternalRow.cs" />
+    <Compile Include="Model\Puzzle.cs" />
+    <Compile Include="ViewModel\PuzzleSolver.cs" />
     <Compile Include="View\App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
