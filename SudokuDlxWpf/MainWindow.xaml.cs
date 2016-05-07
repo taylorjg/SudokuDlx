@@ -5,6 +5,12 @@
         public MainWindow()
         {
             InitializeComponent();
+
+            ContentRendered += (_, __) =>
+            {
+                BoardControl.InitialiseGrid();
+                BoardControl.DrawGrid();
+            };
         }
     }
 }
