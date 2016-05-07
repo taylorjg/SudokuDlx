@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
 using SudokuDlxWpf.Model;
 
 namespace SudokuDlxWpf.ViewModel
@@ -7,7 +7,8 @@ namespace SudokuDlxWpf.ViewModel
     {
         void Initialise();
         void Reset();
-        void AddInitialValues(IImmutableList<InitialValue> initialValues);
+        void AddInitialValues(IEnumerable<InitialValue> initialValues);
         void AddDigit(Coords coords, int value);
+        void RemoveDigit(Coords coords);
     }
 }
