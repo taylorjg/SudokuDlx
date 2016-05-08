@@ -46,16 +46,6 @@ namespace SudokuDlxWpf.View
             AddDigit(coords, value, false);
         }
 
-        public void RemoveDigit(Coords coords)
-        {
-            Canvas.Children
-                .OfType<FrameworkElement>()
-                .Where(fe => fe.Tag is Coords)
-                .Where(fe => ((Coords)fe.Tag).Equals(coords))
-                .ToList()
-                .ForEach(fe => Canvas.Children.Remove(fe));
-        }
-
         private void AddDigit(Coords coords, int value, bool isInitialValue)
         {
             var digitColour = isInitialValue ? Colors.Red : Colors.Black;
@@ -82,41 +72,14 @@ namespace SudokuDlxWpf.View
             Canvas.Children.Add(border);
         }
 
-        private void DrawGrid()
+        public void RemoveDigit(Coords coords)
         {
-            foreach (var row in Enumerable.Range(0, 10))
-            {
-                var isThickLine = row % 3 == 0;
-                var full = isThickLine ? GridLineThickness : GridLineHalfThickness;
-                var half = isThickLine ? GridLineHalfThickness : GridLineQuarterThickness;
-                var line = new Line
-                {
-                    X1 = 0,
-                    Y1 = _sh * row + half,
-                    X2 = 9 * _sw + GridLineThickness,
-                    Y2 = _sh * row + half,
-                    Stroke = new SolidColorBrush(Colors.Black),
-                    StrokeThickness = full
-                };
-                Canvas.Children.Add(line);
-            }
-
-            foreach (var col in Enumerable.Range(0, 10))
-            {
-                var isThickLine = col % 3 == 0;
-                var full = isThickLine ? GridLineThickness : GridLineHalfThickness;
-                var half = isThickLine ? GridLineHalfThickness : GridLineQuarterThickness;
-                var line = new Line
-                {
-                    X1 = _sw * col + half,
-                    Y1 = GridLineHalfThickness,
-                    X2 = _sw * col + half,
-                    Y2 = GridLineHalfThickness + 9 * _sh,
-                    Stroke = new SolidColorBrush(Colors.Black),
-                    StrokeThickness = full
-                };
-                Canvas.Children.Add(line);
-            }
+            Canvas.Children
+                .OfType<FrameworkElement>()
+                .Where(fe => fe.Tag is Coords)
+                .Where(fe => ((Coords)fe.Tag).Equals(coords))
+                .ToList()
+                .ForEach(fe => Canvas.Children.Remove(fe));
         }
 
         private void RemoveDigits()
@@ -126,6 +89,52 @@ namespace SudokuDlxWpf.View
                 .Where(fe => fe.Tag is Coords)
                 .ToList()
                 .ForEach(fe => Canvas.Children.Remove(fe));
+        }
+
+        private void DrawGrid()
+        {
+            DrawHorizontalGridLines();
+            DrawVerticalGridLines();
+        }
+
+        private void DrawHorizontalGridLines()
+        {
+            foreach (var row in Enumerable.Range(0, 10))
+            {
+                var isThickLine = row%3 == 0;
+                var full = isThickLine ? GridLineThickness : GridLineHalfThickness;
+                var half = isThickLine ? GridLineHalfThickness : GridLineQuarterThickness;
+                var line = new Line
+                {
+                    X1 = 0,
+                    Y1 = _sh*row + half,
+                    X2 = 9*_sw + GridLineThickness,
+                    Y2 = _sh*row + half,
+                    Stroke = new SolidColorBrush(Colors.Black),
+                    StrokeThickness = full
+                };
+                Canvas.Children.Add(line);
+            }
+        }
+
+        private void DrawVerticalGridLines()
+        {
+            foreach (var col in Enumerable.Range(0, 10))
+            {
+                var isThickLine = col%3 == 0;
+                var full = isThickLine ? GridLineThickness : GridLineHalfThickness;
+                var half = isThickLine ? GridLineHalfThickness : GridLineQuarterThickness;
+                var line = new Line
+                {
+                    X1 = _sw*col + half,
+                    Y1 = GridLineHalfThickness,
+                    X2 = _sw*col + half,
+                    Y2 = GridLineHalfThickness + 9*_sh,
+                    Stroke = new SolidColorBrush(Colors.Black),
+                    StrokeThickness = full
+                };
+                Canvas.Children.Add(line);
+            }
         }
     }
 }
