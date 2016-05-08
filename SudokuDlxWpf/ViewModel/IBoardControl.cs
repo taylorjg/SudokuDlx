@@ -3,7 +3,7 @@ using SudokuDlxWpf.Model;
 
 namespace SudokuDlxWpf.ViewModel
 {
-    interface IBoardControl
+    public interface IBoardControl
     {
         void Initialise();
         void Reset();
