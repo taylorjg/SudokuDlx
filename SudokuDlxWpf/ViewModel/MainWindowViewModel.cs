@@ -20,13 +20,14 @@ namespace SudokuDlxWpf.ViewModel
         private readonly Queue<IImmutableList<InternalRow>> _searchSteps = new Queue<IImmutableList<InternalRow>>();
         private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
-        private readonly Puzzle _puzzle = PuzzleFactory.CreatePuzzleFromJsonResource("DailyTelegraphWorldsHardestSudoku.json");
         private RelayCommand _solveCommand;
         private RelayCommand _resetCommand;
         private RelayCommand _cancelCommand;
         private RelayCommand _closeCommand;
         private bool _solving;
         private bool _dirty;
+        private readonly IImmutableList<Puzzle> _puzzles;
+        private Puzzle _selectedPuzzle;
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
@@ -34,12 +35,25 @@ namespace SudokuDlxWpf.ViewModel
 
             _timer.Tick += (_, __) => OnTick();
             _timer.Interval = TimeSpan.FromMilliseconds(10);
+
+            var puzzleResourceNames = new[]
+            {
+                "DailyTelegraph27744.json",
+                "DailyTelegraph27808.json",
+                "DailyTelegraphWorldsHardestSudoku.json"
+            };
+
+            _puzzles = puzzleResourceNames
+                .Select(PuzzleFactory.CreatePuzzleFromJsonResource)
+                .ToImmutableList();
+
+            SelectedPuzzle = _puzzles.First();
         }
 
         public void Initialise()
         {
             _boardControl.Initialise();
-            _boardControl.AddInitialValues(_puzzle.InitialValues);
+            _boardControl.AddInitialValues(SelectedPuzzle.InitialValues);
         }
 
         public ICommand SolveCommand => _solveCommand ?? (_solveCommand = new RelayCommand(OnSolve, OnCanSolve));
@@ -57,7 +71,7 @@ namespace SudokuDlxWpf.ViewModel
             _searchSteps.Clear();
 
             var puzzleSolver = new PuzzleSolver(
-                _puzzle,
+                SelectedPuzzle,
                 OnSolutionFound,
                 OnSearchStep,
                 SynchronizationContext.Current,
@@ -114,6 +128,20 @@ namespace SudokuDlxWpf.ViewModel
             {
                 _dirty = value;
                 RaiseCommonPropertyChangedEvents();
+            }
+        }
+
+        public IEnumerable<Puzzle> Puzzles => _puzzles;
+
+        public Puzzle SelectedPuzzle {
+            get { return _selectedPuzzle;}
+            set
+            {
+                _selectedPuzzle = value;
+                _boardControl.Reset();
+                _boardControl.AddInitialValues(_selectedPuzzle.InitialValues);
+                Dirty = false;
+                RaisePropertyChanged(() => SelectedPuzzle);
             }
         }
 

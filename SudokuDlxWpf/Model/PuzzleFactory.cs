@@ -31,7 +31,8 @@ namespace SudokuDlxWpf.Model
                 var puzzleData = jsonSerializer.Deserialize<dynamic>(jsonTextReader);
                 var rowStrings = (JArray)puzzleData["rowStrings"];
                 var initialValues = RowStringsToInitialValues(rowStrings);
-                return new Puzzle(initialValues);
+                var title = (string) puzzleData["title"];
+                return new Puzzle(initialValues, title);
             }
         }
 
