@@ -22,7 +22,7 @@
             <view:BoardControl x:Name="BoardControl" Width="544" Height="544"></view:BoardControl>
         </Grid>
 
-        <DockPanel LastChildFill="False" Margin="0,10,0,0">
+        <DockPanel Margin="0,10,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"></ColumnDefinition>
@@ -47,7 +47,6 @@
                         Grid.Row="0"
                         Grid.Column="1"
                         Margin="0,10,0,0"
-                        MinWidth="500"
                         ItemsSource="{Binding Path=Puzzles}"
                         DisplayMemberPath="Title"
                         SelectedValuePath=""
@@ -58,12 +57,12 @@
                         Grid.Row="1"
                         Grid.Column="1"
                         Margin="0,10,0,0"
-                        MinWidth="500"
                         Minimum="0"
                         Maximum="100"
                         TickFrequency="10"
                         TickPlacement="Both"
-                        AutoToolTipPlacement="BottomRight">
+                        AutoToolTipPlacement="BottomRight"
+                        Value="{Binding Path=SpeedMilliseconds}">
                     </Slider>
                 </Grid>
             </Grid>

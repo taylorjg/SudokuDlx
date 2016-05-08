@@ -28,13 +28,12 @@ namespace SudokuDlxWpf.ViewModel
         private bool _dirty;
         private readonly IImmutableList<Puzzle> _puzzles;
         private Puzzle _selectedPuzzle;
+        private int _speedMilliseconds;
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
             _boardControl = boardControl;
-
             _timer.Tick += (_, __) => OnTick();
-            _timer.Interval = TimeSpan.FromMilliseconds(10);
 
             var puzzleResourceNames = new[]
             {
@@ -48,6 +47,7 @@ namespace SudokuDlxWpf.ViewModel
                 .ToImmutableList();
 
             SelectedPuzzle = _puzzles.First();
+            SpeedMilliseconds = 100;
         }
 
         public void Initialise()
@@ -142,6 +142,16 @@ namespace SudokuDlxWpf.ViewModel
                 _boardControl.AddInitialValues(_selectedPuzzle.InitialValues);
                 Dirty = false;
                 RaisePropertyChanged(() => SelectedPuzzle);
+            }
+        }
+
+        public int SpeedMilliseconds {
+            get { return _speedMilliseconds; }
+            set
+            {
+                _speedMilliseconds = value;
+                _timer.Interval = TimeSpan.FromMilliseconds(_speedMilliseconds);
+                RaisePropertyChanged(() => SpeedMilliseconds);
             }
         }
 
