@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
+using System.Windows.Input;
 using System.Windows.Threading;
 using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
 using SudokuDlxWpf.Model;
 
 namespace SudokuDlxWpf.ViewModel
@@ -19,6 +21,12 @@ namespace SudokuDlxWpf.ViewModel
         private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
         private readonly Puzzle _puzzle = PuzzleFactory.CreatePuzzleFromJsonResource("DailyTelegraphWorldsHardestSudoku.json");
+        private RelayCommand _solveCommand;
+        private RelayCommand _resetCommand;
+        private RelayCommand _cancelCommand;
+        private RelayCommand _closeCommand;
+        private bool _solving;
+        private bool _dirty;
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
@@ -31,17 +39,18 @@ namespace SudokuDlxWpf.ViewModel
         public void Initialise()
         {
             _boardControl.Initialise();
-        }
-
-        public void Cancel()
-        {
-            _cancellationTokenSource?.Cancel();
-        }
-
-        public void OnSolve()
-        {
-            _boardControl.Reset();
             _boardControl.AddInitialValues(_puzzle.InitialValues);
+        }
+
+        public ICommand SolveCommand => _solveCommand ?? (_solveCommand = new RelayCommand(OnSolve, OnCanSolve));
+        public ICommand ResetCommand => _resetCommand ?? (_resetCommand = new RelayCommand(OnReset, OnCanReset));
+        public ICommand CancelCommand => _cancelCommand ?? (_cancelCommand = new RelayCommand(OnCancel, OnCanCancel));
+        public ICommand CloseCommand => _closeCommand ?? (_closeCommand = new RelayCommand(OnClose));
+
+        private void OnSolve()
+        {
+            Solving = true;
+            Dirty = true;
 
             _cancellationTokenSource = new CancellationTokenSource();
             _currentInternalsRows.Clear();
@@ -57,6 +66,65 @@ namespace SudokuDlxWpf.ViewModel
             puzzleSolver.SolvePuzzle();
         }
 
+        private bool OnCanSolve()
+        {
+            return !Solving;
+        }
+
+        private void OnReset()
+        {
+            _boardControl.Reset();
+            _boardControl.AddInitialValues(_puzzle.InitialValues);
+            Dirty = false;
+        }
+
+        private bool OnCanReset()
+        {
+            return Dirty && !Solving;
+        }
+
+        private void OnCancel()
+        {
+            _cancellationTokenSource.Cancel();
+            _searchSteps.Clear();
+            Solving = false;
+        }
+
+        private bool OnCanCancel()
+        {
+            return Solving;
+        }
+
+        private void OnClose()
+        {
+            if (Solving) OnCancel();
+        }
+
+        public bool Solving {
+            get { return _solving; }
+            set
+            {
+                _solving = value;
+                RaiseCommonPropertyChangedEvents();
+            }
+        }
+
+        public bool Dirty {
+            get { return _dirty; }
+            set
+            {
+                _dirty = value;
+                RaiseCommonPropertyChangedEvents();
+            }
+        }
+
+        private void RaiseCommonPropertyChangedEvents()
+        {
+            _solveCommand?.RaiseCanExecuteChanged();
+            _resetCommand?.RaiseCanExecuteChanged();
+            _cancelCommand?.RaiseCanExecuteChanged();
+        }
+
         private void OnSearchStep(IImmutableList<InternalRow> internalRows)
         {
             if (!_timer.IsEnabled) _timer.Start();
@@ -66,7 +134,6 @@ namespace SudokuDlxWpf.ViewModel
         private void OnSolutionFound(IImmutableList<InternalRow> internalRows)
         {
             _searchSteps.Enqueue(null);
-            _cancellationTokenSource = null;
         }
 
         private void OnTick()
@@ -75,13 +142,17 @@ namespace SudokuDlxWpf.ViewModel
 
             var internalRows = _searchSteps.Dequeue();
 
-            if (internalRows == null)
-            {
-                _timer.Stop();
-                return;
-            }
+            if (internalRows != null)
+                AdjustDisplayedDigits(internalRows);
+            else
+                FinishedSolving();
+        }
 
-            AdjustDisplayedDigits(internalRows);
+        private void FinishedSolving()
+        {
+            Solving = false;
+            _cancellationTokenSource = null;
+            _timer.Stop();
         }
 
         private void AdjustDisplayedDigits(IEnumerable<InternalRow> internalRows)

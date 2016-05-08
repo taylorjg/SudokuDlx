@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:view="clr-namespace:SudokuDlxWpf.View"
         Title="Sudoku Solver"
-        Height="600"
-        Width="600">
+        Width="690"
+        Height="710"
+        >
 
     <Window.Background>
         <VisualBrush TileMode="Tile" Viewport="0,0,0.2,0.2">
@@ -13,9 +14,21 @@
             </VisualBrush.Visual>
         </VisualBrush>
     </Window.Background>
-    
-    <Grid>
-        <view:BoardControl x:Name="BoardControl" Width="544" Height="544"></view:BoardControl>
-    </Grid>
-    
+
+    <StackPanel Margin="10">
+
+        <Grid>
+            <view:BoardControl x:Name="BoardControl" Width="544" Height="544"></view:BoardControl>
+        </Grid>
+
+        <DockPanel LastChildFill="False" Margin="0,10,0,0">
+            <StackPanel Orientation="Vertical">
+                <Button Content="Solve" Margin="0,10,0,0" VerticalAlignment="Center" MinWidth="50" Command="{Binding Path=SolveCommand}" />
+                <Button Content="Reset" Margin="0,10,0,0" VerticalAlignment="Center" MinWidth="50" Command="{Binding Path=ResetCommand}" />
+                <Button Content="Cancel" Margin="0,10,0,0" VerticalAlignment="Center" MinWidth="50" Command="{Binding Path=CancelCommand}" />
+            </StackPanel>
+        </DockPanel>
+
+    </StackPanel>
+
 </Window>

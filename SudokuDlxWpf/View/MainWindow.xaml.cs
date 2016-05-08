@@ -11,13 +11,9 @@ namespace SudokuDlxWpf.View
             var mainWindowViewModel = new MainWindowViewModel(BoardControl);
             DataContext = mainWindowViewModel;
 
-            ContentRendered += (_, __) =>
-            {
-                mainWindowViewModel.Initialise();
-                mainWindowViewModel.OnSolve();
-            };
+            ContentRendered += (_, __) => mainWindowViewModel.Initialise();
 
-            Closed += (_, __) => mainWindowViewModel.Cancel();
+            Closed += (_, __) => mainWindowViewModel.CloseCommand.Execute(null);
         }
     }
 }
