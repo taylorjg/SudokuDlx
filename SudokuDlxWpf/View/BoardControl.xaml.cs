@@ -32,7 +32,8 @@ namespace SudokuDlxWpf.View
 
         public void Reset()
         {
-            RemoveDigits();
+            RemoveDigits(true);
+            RemoveDigits(false);
         }
 
         public void AddInitialValues(IEnumerable<InitialValue> initialValues)
@@ -44,6 +45,21 @@ namespace SudokuDlxWpf.View
         public void AddDigit(Coords coords, int value)
         {
             AddDigit(coords, value, false);
+        }
+
+        public void RemoveDigit(Coords coords)
+        {
+            Canvas.Children
+                .OfType<FrameworkElement>()
+                .Where(fe => fe.Tag is DigitTag)
+                .Where(fe => ((DigitTag)fe.Tag).Coords.Equals(coords))
+                .ToList()
+                .ForEach(fe => Canvas.Children.Remove(fe));
+        }
+
+        public void RemoveDigits()
+        {
+            RemoveDigits(false);
         }
 
         private void AddDigit(Coords coords, int value, bool isInitialValue)
@@ -64,7 +80,7 @@ namespace SudokuDlxWpf.View
                 Width = _sw,
                 Height = _sh,
                 Child = textBlock,
-                Tag = coords
+                Tag = new DigitTag(coords, isInitialValue),
             };
 
             Canvas.SetLeft(border, coords.Col * _sw + GridLineHalfThickness);
@@ -72,21 +88,12 @@ namespace SudokuDlxWpf.View
             Canvas.Children.Add(border);
         }
 
-        public void RemoveDigit(Coords coords)
+        private void RemoveDigits(bool isInitialValue)
         {
             Canvas.Children
                 .OfType<FrameworkElement>()
-                .Where(fe => fe.Tag is Coords)
-                .Where(fe => ((Coords)fe.Tag).Equals(coords))
-                .ToList()
-                .ForEach(fe => Canvas.Children.Remove(fe));
-        }
-
-        private void RemoveDigits()
-        {
-            Canvas.Children
-                .OfType<FrameworkElement>()
-                .Where(fe => fe.Tag is Coords)
+                .Where(fe => fe.Tag is DigitTag)
+                .Where(fe => ((DigitTag)fe.Tag).IsInitialValue == isInitialValue)
                 .ToList()
                 .ForEach(fe => Canvas.Children.Remove(fe));
         }
@@ -134,6 +141,18 @@ namespace SudokuDlxWpf.View
                     StrokeThickness = full
                 };
                 Canvas.Children.Add(line);
+            }
+        }
+
+        private class DigitTag
+        {
+            public Coords Coords { get; }
+            public bool IsInitialValue { get; }
+
+            public DigitTag(Coords coords, bool isInitialValue)
+            {
+                Coords = coords;
+                IsInitialValue = isInitialValue;
             }
         }
     }

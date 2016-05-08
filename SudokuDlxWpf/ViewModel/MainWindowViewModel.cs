@@ -73,8 +73,7 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnReset()
         {
-            _boardControl.Reset();
-            _boardControl.AddInitialValues(_puzzle.InitialValues);
+            _boardControl.RemoveDigits();
             Dirty = false;
         }
 

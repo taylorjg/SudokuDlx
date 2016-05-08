@@ -10,5 +10,6 @@ namespace SudokuDlxWpf.ViewModel
         void AddInitialValues(IEnumerable<InitialValue> initialValues);
         void AddDigit(Coords coords, int value);
         void RemoveDigit(Coords coords);
+        void RemoveDigits();
     }
 }

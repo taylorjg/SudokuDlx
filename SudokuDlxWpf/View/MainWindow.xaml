@@ -5,6 +5,7 @@
         Title="Sudoku Solver"
         Width="690"
         Height="710"
+        WindowStartupLocation="CenterScreen"
         >
 
     <Window.Background>
