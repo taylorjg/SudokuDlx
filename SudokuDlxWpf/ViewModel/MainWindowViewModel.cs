@@ -17,7 +17,7 @@ namespace SudokuDlxWpf.ViewModel
         private CancellationTokenSource _cancellationTokenSource;
         private readonly List<InternalRow> _currentInternalsRows = new List<InternalRow>();
         private readonly DispatcherTimer _timer = new DispatcherTimer();
-        private readonly Queue<IImmutableList<InternalRow>> _searchSteps = new Queue<IImmutableList<InternalRow>>();
+        private readonly Queue<Message> _messageQueue = new Queue<Message>();
         private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
         private RelayCommand _solveCommand;
@@ -68,7 +68,7 @@ namespace SudokuDlxWpf.ViewModel
 
             _cancellationTokenSource = new CancellationTokenSource();
             _currentInternalsRows.Clear();
-            _searchSteps.Clear();
+            _messageQueue.Clear();
 
             var puzzleSolver = new PuzzleSolver(
                 SelectedPuzzle,
@@ -100,7 +100,7 @@ namespace SudokuDlxWpf.ViewModel
         private void OnCancel()
         {
             _cancellationTokenSource.Cancel();
-            _searchSteps.Clear();
+            _messageQueue.Clear();
             Solving = false;
         }
 
@@ -163,42 +163,53 @@ namespace SudokuDlxWpf.ViewModel
             _cancelCommand?.RaiseCanExecuteChanged();
         }
 
+        private void OnSearchStep(IImmutableList<InternalRow> internalRows)
+        {
+            if (!_timer.IsEnabled) _timer.Start();
+            _messageQueue.Enqueue(new SearchStepMessage(internalRows));
+        }
+
         private void OnSolutionFound(IImmutableList<InternalRow> internalRows)
         {
-            _searchSteps.Enqueue(null);
+            if (!_timer.IsEnabled) _timer.Start();
+            _messageQueue.Enqueue(new SolutionFoundMessage(internalRows));
         }
 
         private void OnNoSolutionFound()
         {
-            _searchSteps.Enqueue(null);
-        }
-
-        private void OnSearchStep(IImmutableList<InternalRow> internalRows)
-        {
             if (!_timer.IsEnabled) _timer.Start();
-            _searchSteps.Enqueue(internalRows);
+            _messageQueue.Enqueue(new NoSolutionFoundMessage());
         }
 
         private void OnTick()
         {
-            if (!_searchSteps.Any()) return;
+            if (!_messageQueue.Any())
+            {
+                return;
+            }
 
-            var internalRows = _searchSteps.Dequeue();
+            var message = _messageQueue.Dequeue();
 
-            if (internalRows != null)
-                AdjustDisplayedDigits(internalRows);
-            else
-                FinishedSolving();
+            var searchStepMessage = message as SearchStepMessage;
+            if (searchStepMessage != null)
+            {
+                OnSearchStepMessage(searchStepMessage.InternanRows);
+            }
+
+            var solutionFoundMessage = message as SolutionFoundMessage;
+            if (solutionFoundMessage != null)
+            {
+                OnSolutionFoundMessage();
+            }
+
+            var noSolutionFoundMessage = message as NoSolutionFoundMessage;
+            if (noSolutionFoundMessage != null)
+            {
+                OnNoSolutionFoundMessage();
+            }
         }
 
-        private void FinishedSolving()
-        {
-            Solving = false;
-            _cancellationTokenSource = null;
-            _timer.Stop();
-        }
-
-        private void AdjustDisplayedDigits(IEnumerable<InternalRow> internalRows)
+        private void OnSearchStepMessage(IEnumerable<InternalRow> internalRows)
         {
             var newInternalRows = internalRows.Where(x => !x.IsInitialValue).ToImmutableList();
 
@@ -213,6 +224,20 @@ namespace SudokuDlxWpf.ViewModel
             newInternalRows.Intersect(_currentInternalsRows, _sameCoordsDifferentValueComparer)
                 .ToList()
                 .ForEach(ChangeInternalRow);
+        }
+
+        private void OnSolutionFoundMessage()
+        {
+            Solving = false;
+            _cancellationTokenSource = null;
+            _timer.Stop();
+        }
+
+        private void OnNoSolutionFoundMessage()
+        {
+            Solving = false;
+            _cancellationTokenSource = null;
+            _timer.Stop();
         }
 
         private void AddInternalRow(InternalRow internalRow)
@@ -257,6 +282,34 @@ namespace SudokuDlxWpf.ViewModel
             {
                 return 0;
             }
+        }
+
+        private abstract class Message
+        {
+        }
+
+        private class SearchStepMessage : Message
+        {
+            public IImmutableList<InternalRow> InternanRows { get; }
+
+            public SearchStepMessage(IImmutableList<InternalRow> internanRows)
+            {
+                InternanRows = internanRows;
+            }
+        }
+
+        private class SolutionFoundMessage : Message
+        {
+            public IImmutableList<InternalRow> InternanRows { get; }
+
+            public SolutionFoundMessage(IImmutableList<InternalRow> internanRows)
+            {
+                InternanRows = internanRows;
+            }
+        }
+
+        private class NoSolutionFoundMessage : Message
+        {
         }
     }
 }
