@@ -14,6 +14,7 @@ namespace SudokuDlxWpf.ViewModel
     {
         private readonly Puzzle _puzzle;
         private readonly Action<IImmutableList<InternalRow>> _onSolutionFound;
+        private readonly Action _onNoSolutionFound;
         private readonly Action<IImmutableList<InternalRow>> _onSearchStep;
         private readonly SynchronizationContext _synchronizationContext;
         private readonly CancellationToken _cancellationToken;
@@ -21,12 +22,14 @@ namespace SudokuDlxWpf.ViewModel
         public PuzzleSolver(
             Puzzle puzzle,
             Action<IImmutableList<InternalRow>> onSolutionFound,
+            Action onNoSolutionFound,
             Action<IImmutableList<InternalRow>> onSearchStep,
             SynchronizationContext synchronizationContext,
             CancellationToken cancellationToken)
         {
             _puzzle = puzzle;
             _onSolutionFound = onSolutionFound;
+            _onNoSolutionFound = onNoSolutionFound;
             _onSearchStep = onSearchStep;
             _synchronizationContext = synchronizationContext;
             _cancellationToken = cancellationToken;
@@ -64,6 +67,10 @@ namespace SudokuDlxWpf.ViewModel
                     .Select(rowIndex => internalRows[rowIndex])
                     .ToImmutableList();
                 _synchronizationContext.Post(_onSolutionFound, solutionInternalRows);
+            }
+            else
+            {
+                _synchronizationContext.Post(_onNoSolutionFound);
             }
         }
 

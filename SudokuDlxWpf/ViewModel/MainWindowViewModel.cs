@@ -73,6 +73,7 @@ namespace SudokuDlxWpf.ViewModel
             var puzzleSolver = new PuzzleSolver(
                 SelectedPuzzle,
                 OnSolutionFound,
+                OnNoSolutionFound,
                 OnSearchStep,
                 SynchronizationContext.Current,
                 _cancellationTokenSource.Token);
@@ -162,15 +163,20 @@ namespace SudokuDlxWpf.ViewModel
             _cancelCommand?.RaiseCanExecuteChanged();
         }
 
+        private void OnSolutionFound(IImmutableList<InternalRow> internalRows)
+        {
+            _searchSteps.Enqueue(null);
+        }
+
+        private void OnNoSolutionFound()
+        {
+            _searchSteps.Enqueue(null);
+        }
+
         private void OnSearchStep(IImmutableList<InternalRow> internalRows)
         {
             if (!_timer.IsEnabled) _timer.Start();
             _searchSteps.Enqueue(internalRows);
-        }
-
-        private void OnSolutionFound(IImmutableList<InternalRow> internalRows)
-        {
-            _searchSteps.Enqueue(null);
         }
 
         private void OnTick()
