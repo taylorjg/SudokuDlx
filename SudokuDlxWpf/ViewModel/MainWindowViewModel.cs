@@ -9,17 +9,16 @@ using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using SudokuDlxWpf.Model;
 
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedMember.Global
+
 namespace SudokuDlxWpf.ViewModel
 {
+
     public class MainWindowViewModel : ViewModelBase
     {
         private readonly IBoardControl _boardControl;
         private CancellationTokenSource _cancellationTokenSource;
-        private readonly List<InternalRow> _currentInternalsRows = new List<InternalRow>();
-        private readonly DispatcherTimer _timer = new DispatcherTimer();
-        private readonly Queue<Message> _messageQueue = new Queue<Message>();
-        private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
-        private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
         private RelayCommand _solveCommand;
         private RelayCommand _resetCommand;
         private RelayCommand _cancelCommand;
@@ -29,6 +28,12 @@ namespace SudokuDlxWpf.ViewModel
         private Puzzle _selectedPuzzle;
         private int _speedMilliseconds;
         private string _statusBarText;
+
+        private readonly DispatcherTimer _timer = new DispatcherTimer();
+        private readonly Queue<Message> _messageQueue = new Queue<Message>();
+        private readonly List<InternalRow> _currentInternalsRows = new List<InternalRow>();
+        private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
+        private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
         private int _searchStepCount;
 
         private enum State
@@ -199,17 +204,28 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnSearchStep(IImmutableList<InternalRow> internalRows)
         {
-            EnqueueMessage(new SearchStepMessage(internalRows));
+            var filteredInternalRows = FilterOutInitialValues(internalRows);
+
+            if (filteredInternalRows.Any())
+                EnqueueMessage(new SearchStepMessage(filteredInternalRows));
+            else
+                _searchStepCount++;
         }
 
         private void OnSolutionFound(IImmutableList<InternalRow> internalRows)
         {
-            EnqueueMessage(new SolutionFoundMessage(internalRows));
+            var filteredInternalRows = FilterOutInitialValues(internalRows);
+            EnqueueMessage(new SolutionFoundMessage(filteredInternalRows));
         }
 
         private void OnNoSolutionFound()
         {
             EnqueueMessage(new NoSolutionFoundMessage());
+        }
+
+        private static IImmutableList<InternalRow> FilterOutInitialValues(IEnumerable<InternalRow> internalRows)
+        {
+            return internalRows.Where(internalRow => !internalRow.IsInitialValue).ToImmutableList();
         }
 
         private void EnqueueMessage(Message message)
@@ -250,13 +266,13 @@ namespace SudokuDlxWpf.ViewModel
             throw new ApplicationException($"Unknown message type, {message.GetType().FullName}");
         }
 
-        private void OnSearchStepMessage(IEnumerable<InternalRow> internalRows)
+        private void OnSearchStepMessage(IImmutableList<InternalRow> internalRows)
         {
             AdjustDisplayedDigits(internalRows);
             _searchStepCount++;
         }
 
-        private void OnSolutionFoundMessage(IEnumerable<InternalRow> internalRows)
+        private void OnSolutionFoundMessage(IImmutableList<InternalRow> internalRows)
         {
             AdjustDisplayedDigits(internalRows);
             StatusBarText = $"Solution found after {_searchStepCount} search steps";
@@ -270,10 +286,8 @@ namespace SudokuDlxWpf.ViewModel
             SetStateDirty();
         }
 
-        private void AdjustDisplayedDigits(IEnumerable<InternalRow> internalRows)
+        private void AdjustDisplayedDigits(IImmutableList<InternalRow> newInternalRows)
         {
-            var newInternalRows = internalRows.Where(x => !x.IsInitialValue).ToImmutableList();
-
             _currentInternalsRows.Except(newInternalRows, _sameCoordsComparer)
                 .ToList()
                 .ForEach(RemoveInternalRow);
@@ -282,7 +296,7 @@ namespace SudokuDlxWpf.ViewModel
                 .ToList()
                 .ForEach(AddInternalRow);
 
-            newInternalRows.Intersect(_currentInternalsRows, _sameCoordsDifferentValueComparer)
+            _currentInternalsRows.Intersect(newInternalRows, _sameCoordsDifferentValueComparer)
                 .ToList()
                 .ForEach(ChangeInternalRow);
         }
