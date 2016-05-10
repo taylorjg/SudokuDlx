@@ -183,33 +183,57 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnTick()
         {
-            if (!_messageQueue.Any())
-            {
-                return;
-            }
+            if (_messageQueue.Any())
+                DispatchMessage(_messageQueue.Dequeue());
+        }
 
-            var message = _messageQueue.Dequeue();
-
+        private void DispatchMessage(Message message)
+        {
             var searchStepMessage = message as SearchStepMessage;
             if (searchStepMessage != null)
             {
-                OnSearchStepMessage(searchStepMessage.InternanRows);
+                OnSearchStepMessage(searchStepMessage.InternalRows);
+                return;
             }
 
             var solutionFoundMessage = message as SolutionFoundMessage;
             if (solutionFoundMessage != null)
             {
-                OnSolutionFoundMessage();
+                OnSolutionFoundMessage(solutionFoundMessage.InternalRows);
+                return;
             }
 
             var noSolutionFoundMessage = message as NoSolutionFoundMessage;
             if (noSolutionFoundMessage != null)
             {
                 OnNoSolutionFoundMessage();
+                return;
             }
+
+            throw new ApplicationException($"Unknown message type, {message.GetType().FullName}");
         }
 
         private void OnSearchStepMessage(IEnumerable<InternalRow> internalRows)
+        {
+            AdjustDisplayedDigits(internalRows);
+        }
+
+        private void OnSolutionFoundMessage(IEnumerable<InternalRow> internalRows)
+        {
+            AdjustDisplayedDigits(internalRows);
+            Solving = false;
+            _cancellationTokenSource = null;
+            _timer.Stop();
+        }
+
+        private void OnNoSolutionFoundMessage()
+        {
+            Solving = false;
+            _cancellationTokenSource = null;
+            _timer.Stop();
+        }
+
+        private void AdjustDisplayedDigits(IEnumerable<InternalRow> internalRows)
         {
             var newInternalRows = internalRows.Where(x => !x.IsInitialValue).ToImmutableList();
 
@@ -224,20 +248,6 @@ namespace SudokuDlxWpf.ViewModel
             newInternalRows.Intersect(_currentInternalsRows, _sameCoordsDifferentValueComparer)
                 .ToList()
                 .ForEach(ChangeInternalRow);
-        }
-
-        private void OnSolutionFoundMessage()
-        {
-            Solving = false;
-            _cancellationTokenSource = null;
-            _timer.Stop();
-        }
-
-        private void OnNoSolutionFoundMessage()
-        {
-            Solving = false;
-            _cancellationTokenSource = null;
-            _timer.Stop();
         }
 
         private void AddInternalRow(InternalRow internalRow)
@@ -290,21 +300,21 @@ namespace SudokuDlxWpf.ViewModel
 
         private class SearchStepMessage : Message
         {
-            public IImmutableList<InternalRow> InternanRows { get; }
+            public IImmutableList<InternalRow> InternalRows { get; }
 
-            public SearchStepMessage(IImmutableList<InternalRow> internanRows)
+            public SearchStepMessage(IImmutableList<InternalRow> internalRows)
             {
-                InternanRows = internanRows;
+                InternalRows = internalRows;
             }
         }
 
         private class SolutionFoundMessage : Message
         {
-            public IImmutableList<InternalRow> InternanRows { get; }
+            public IImmutableList<InternalRow> InternalRows { get; }
 
-            public SolutionFoundMessage(IImmutableList<InternalRow> internanRows)
+            public SolutionFoundMessage(IImmutableList<InternalRow> internalRows)
             {
-                InternanRows = internanRows;
+                InternalRows = internalRows;
             }
         }
 
