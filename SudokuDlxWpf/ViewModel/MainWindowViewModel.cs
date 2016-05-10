@@ -24,13 +24,52 @@ namespace SudokuDlxWpf.ViewModel
         private RelayCommand _resetCommand;
         private RelayCommand _cancelCommand;
         private RelayCommand _closeCommand;
-        private bool _solving;
-        private bool _dirty;
+        private State _state;
         private readonly IImmutableList<Puzzle> _puzzles;
         private Puzzle _selectedPuzzle;
         private int _speedMilliseconds;
         private string _statusBarText;
         private int _searchStepCount;
+
+        private enum State
+        {
+            Clean,
+            Solving,
+            Dirty
+        }
+
+        private void SetState(State state)
+        {
+            _state = state;
+            RaiseCommonPropertyChangedEvents();
+        }
+
+        private void SetStateClean()
+        {
+            _boardControl.Reset();
+            _boardControl.AddInitialValues(_selectedPuzzle.InitialValues);
+            ClearStatusBarText();
+            SetState(State.Clean);
+        }
+
+        private void SetStateSolving()
+        {
+            _cancellationTokenSource = new CancellationTokenSource();
+            _currentInternalsRows.Clear();
+            _messageQueue.Clear();
+            _searchStepCount = 0;
+            _boardControl.RemoveDigits();
+            ClearStatusBarText();
+            SetState(State.Solving);
+        }
+
+        private void SetStateDirty()
+        {
+            _cancellationTokenSource = null;
+            _messageQueue.Clear();
+            _timer.Stop();
+            SetState(State.Dirty);
+        }
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
@@ -50,7 +89,7 @@ namespace SudokuDlxWpf.ViewModel
 
             SelectedPuzzle = _puzzles.First();
             SpeedMilliseconds = 100;
-            ClearStatusBarText();
+            SetStateClean();
         }
 
         public void Initialise()
@@ -66,15 +105,7 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnSolve()
         {
-            Solving = true;
-            Dirty = true;
-
-            _cancellationTokenSource = new CancellationTokenSource();
-            _currentInternalsRows.Clear();
-            _messageQueue.Clear();
-            _searchStepCount = 0;
-            _boardControl.RemoveDigits();
-            ClearStatusBarText();
+            SetStateSolving();
 
             var puzzleSolver = new PuzzleSolver(
                 SelectedPuzzle,
@@ -89,32 +120,29 @@ namespace SudokuDlxWpf.ViewModel
 
         private bool OnCanSolve()
         {
-            return !Solving;
+            return _state != State.Solving;
         }
 
         private void OnReset()
         {
-            _boardControl.RemoveDigits();
-            Dirty = false;
-            ClearStatusBarText();
+            SetStateClean();
         }
 
         private bool OnCanReset()
         {
-            return Dirty && !Solving;
+            return _state == State.Dirty;
         }
 
         private void OnCancel()
         {
             _cancellationTokenSource.Cancel();
-            _messageQueue.Clear();
-            Solving = false;
+            SetStateDirty();
             StatusBarText = $"Cancelled after {_searchStepCount} search steps";
         }
 
         private bool OnCanCancel()
         {
-            return Solving;
+            return _state == State.Solving;
         }
 
         private void OnClose()
@@ -122,23 +150,7 @@ namespace SudokuDlxWpf.ViewModel
             if (Solving) OnCancel();
         }
 
-        public bool Solving {
-            get { return _solving; }
-            set
-            {
-                _solving = value;
-                RaiseCommonPropertyChangedEvents();
-            }
-        }
-
-        public bool Dirty {
-            get { return _dirty; }
-            set
-            {
-                _dirty = value;
-                RaiseCommonPropertyChangedEvents();
-            }
-        }
+        public bool Solving => _state == State.Solving;
 
         public IEnumerable<Puzzle> Puzzles => _puzzles;
 
@@ -147,10 +159,7 @@ namespace SudokuDlxWpf.ViewModel
             set
             {
                 _selectedPuzzle = value;
-                _boardControl.Reset();
-                _boardControl.AddInitialValues(_selectedPuzzle.InitialValues);
-                Dirty = false;
-                ClearStatusBarText();
+                SetStateClean();
                 RaisePropertyChanged(() => SelectedPuzzle);
             }
         }
@@ -182,7 +191,6 @@ namespace SudokuDlxWpf.ViewModel
         private void RaiseCommonPropertyChangedEvents()
         {
             RaisePropertyChanged(() => Solving);
-            RaisePropertyChanged(() => Dirty);
 
             _solveCommand?.RaiseCanExecuteChanged();
             _resetCommand?.RaiseCanExecuteChanged();
@@ -191,20 +199,23 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnSearchStep(IImmutableList<InternalRow> internalRows)
         {
-            if (!_timer.IsEnabled) _timer.Start();
-            _messageQueue.Enqueue(new SearchStepMessage(internalRows));
+            EnqueueMessage(new SearchStepMessage(internalRows));
         }
 
         private void OnSolutionFound(IImmutableList<InternalRow> internalRows)
         {
-            if (!_timer.IsEnabled) _timer.Start();
-            _messageQueue.Enqueue(new SolutionFoundMessage(internalRows));
+            EnqueueMessage(new SolutionFoundMessage(internalRows));
         }
 
         private void OnNoSolutionFound()
         {
+            EnqueueMessage(new NoSolutionFoundMessage());
+        }
+
+        private void EnqueueMessage(Message message)
+        {
             if (!_timer.IsEnabled) _timer.Start();
-            _messageQueue.Enqueue(new NoSolutionFoundMessage());
+            _messageQueue.Enqueue(message);
         }
 
         private void OnTick()
@@ -247,19 +258,16 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnSolutionFoundMessage(IEnumerable<InternalRow> internalRows)
         {
-            StatusBarText = $"Solution found after {_searchStepCount} search steps";
             AdjustDisplayedDigits(internalRows);
-            Solving = false;
-            _cancellationTokenSource = null;
-            _timer.Stop();
+            StatusBarText = $"Solution found after {_searchStepCount} search steps";
+            SetStateDirty();
         }
 
         private void OnNoSolutionFoundMessage()
         {
+            _boardControl.RemoveDigits();
             StatusBarText = $"No solution found after {_searchStepCount} search steps";
-            Solving = false;
-            _cancellationTokenSource = null;
-            _timer.Stop();
+            SetStateDirty();
         }
 
         private void AdjustDisplayedDigits(IEnumerable<InternalRow> internalRows)
