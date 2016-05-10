@@ -73,6 +73,7 @@ namespace SudokuDlxWpf.ViewModel
             _currentInternalsRows.Clear();
             _messageQueue.Clear();
             _searchStepCount = 0;
+            _boardControl.RemoveDigits();
             ClearStatusBarText();
 
             var puzzleSolver = new PuzzleSolver(
