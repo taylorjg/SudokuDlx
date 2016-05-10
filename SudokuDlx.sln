@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SudokuDlxConsole", "SudokuD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SudokuDlxWpf", "SudokuDlxWpf\SudokuDlxWpf.csproj", "{B01A0C27-AAD4-45A3-869F-393C6C7D328A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SudokuDlxWpfTests", "SudokuDlxWpfTests\SudokuDlxWpfTests.csproj", "{3C9906C7-2302-4C98-83B7-93A36FD2AD8A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B01A0C27-AAD4-45A3-869F-393C6C7D328A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B01A0C27-AAD4-45A3-869F-393C6C7D328A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B01A0C27-AAD4-45A3-869F-393C6C7D328A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C9906C7-2302-4C98-83B7-93A36FD2AD8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C9906C7-2302-4C98-83B7-93A36FD2AD8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C9906C7-2302-4C98-83B7-93A36FD2AD8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C9906C7-2302-4C98-83B7-93A36FD2AD8A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
