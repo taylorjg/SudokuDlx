@@ -180,6 +180,9 @@ namespace SudokuDlxWpf.ViewModel
 
         private void RaiseCommonPropertyChangedEvents()
         {
+            RaisePropertyChanged(() => Solving);
+            RaisePropertyChanged(() => Dirty);
+
             _solveCommand?.RaiseCanExecuteChanged();
             _resetCommand?.RaiseCanExecuteChanged();
             _cancelCommand?.RaiseCanExecuteChanged();

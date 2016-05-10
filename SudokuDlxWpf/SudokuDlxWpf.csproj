@@ -100,6 +100,7 @@
     <Compile Include="Model\InternalRow.cs" />
     <Compile Include="Model\PuzzleFactory.cs" />
     <Compile Include="Model\Puzzle.cs" />
+    <Compile Include="ValueConverters\Fred.cs" />
     <Compile Include="ViewModel\MainWindowViewModel.cs" />
     <Compile Include="ViewModel\PuzzleSolver.cs" />
     <Compile Include="View\App.xaml.cs">
