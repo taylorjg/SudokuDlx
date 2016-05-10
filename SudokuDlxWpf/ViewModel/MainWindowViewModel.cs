@@ -29,6 +29,8 @@ namespace SudokuDlxWpf.ViewModel
         private readonly IImmutableList<Puzzle> _puzzles;
         private Puzzle _selectedPuzzle;
         private int _speedMilliseconds;
+        private string _statusBarText;
+        private int _searchStepCount;
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
@@ -48,6 +50,7 @@ namespace SudokuDlxWpf.ViewModel
 
             SelectedPuzzle = _puzzles.First();
             SpeedMilliseconds = 100;
+            ClearStatusBarText();
         }
 
         public void Initialise()
@@ -69,6 +72,8 @@ namespace SudokuDlxWpf.ViewModel
             _cancellationTokenSource = new CancellationTokenSource();
             _currentInternalsRows.Clear();
             _messageQueue.Clear();
+            _searchStepCount = 0;
+            ClearStatusBarText();
 
             var puzzleSolver = new PuzzleSolver(
                 SelectedPuzzle,
@@ -90,6 +95,7 @@ namespace SudokuDlxWpf.ViewModel
         {
             _boardControl.RemoveDigits();
             Dirty = false;
+            ClearStatusBarText();
         }
 
         private bool OnCanReset()
@@ -102,6 +108,7 @@ namespace SudokuDlxWpf.ViewModel
             _cancellationTokenSource.Cancel();
             _messageQueue.Clear();
             Solving = false;
+            StatusBarText = $"Cancelled after {_searchStepCount} search steps";
         }
 
         private bool OnCanCancel()
@@ -142,6 +149,7 @@ namespace SudokuDlxWpf.ViewModel
                 _boardControl.Reset();
                 _boardControl.AddInitialValues(_selectedPuzzle.InitialValues);
                 Dirty = false;
+                ClearStatusBarText();
                 RaisePropertyChanged(() => SelectedPuzzle);
             }
         }
@@ -154,6 +162,20 @@ namespace SudokuDlxWpf.ViewModel
                 _timer.Interval = TimeSpan.FromMilliseconds(_speedMilliseconds);
                 RaisePropertyChanged(() => SpeedMilliseconds);
             }
+        }
+
+        public string StatusBarText {
+            get { return _statusBarText;}
+            set
+            {
+                _statusBarText = value;
+                RaisePropertyChanged(() => StatusBarText);
+            }
+        }
+
+        private void ClearStatusBarText()
+        {
+            StatusBarText = string.Empty;
         }
 
         private void RaiseCommonPropertyChangedEvents()
@@ -216,10 +238,12 @@ namespace SudokuDlxWpf.ViewModel
         private void OnSearchStepMessage(IEnumerable<InternalRow> internalRows)
         {
             AdjustDisplayedDigits(internalRows);
+            _searchStepCount++;
         }
 
         private void OnSolutionFoundMessage(IEnumerable<InternalRow> internalRows)
         {
+            StatusBarText = $"Solution found after {_searchStepCount} search steps";
             AdjustDisplayedDigits(internalRows);
             Solving = false;
             _cancellationTokenSource = null;
@@ -228,6 +252,7 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnNoSolutionFoundMessage()
         {
+            StatusBarText = $"No solution found after {_searchStepCount} search steps";
             Solving = false;
             _cancellationTokenSource = null;
             _timer.Stop();
