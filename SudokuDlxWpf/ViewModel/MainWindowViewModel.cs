@@ -22,7 +22,8 @@ namespace SudokuDlxWpf.ViewModel
         private RelayCommand _solveCommand;
         private RelayCommand _resetCommand;
         private RelayCommand _cancelCommand;
-        private RelayCommand _closeCommand;
+        private RelayCommand _loadedCommand;
+        private RelayCommand _closedCommand;
         private State _state;
         private readonly IImmutableList<Puzzle> _puzzles;
         private Puzzle _selectedPuzzle;
@@ -97,16 +98,11 @@ namespace SudokuDlxWpf.ViewModel
             SetStateClean();
         }
 
-        public void Initialise()
-        {
-            _boardControl.Initialise();
-            _boardControl.AddInitialValues(SelectedPuzzle.InitialValues);
-        }
-
         public ICommand SolveCommand => _solveCommand ?? (_solveCommand = new RelayCommand(OnSolve, OnCanSolve));
         public ICommand ResetCommand => _resetCommand ?? (_resetCommand = new RelayCommand(OnReset, OnCanReset));
         public ICommand CancelCommand => _cancelCommand ?? (_cancelCommand = new RelayCommand(OnCancel, OnCanCancel));
-        public ICommand CloseCommand => _closeCommand ?? (_closeCommand = new RelayCommand(OnClose));
+        public ICommand LoadedCommand => _loadedCommand ?? (_loadedCommand = new RelayCommand(OnLoaded));
+        public ICommand ClosedCommand => _closedCommand ?? (_closedCommand = new RelayCommand(OnClosed));
 
         private void OnSolve()
         {
@@ -150,7 +146,13 @@ namespace SudokuDlxWpf.ViewModel
             return _state == State.Solving;
         }
 
-        private void OnClose()
+        private void OnLoaded()
+        {
+            _boardControl.Initialise();
+            _boardControl.AddInitialValues(SelectedPuzzle.InitialValues);
+        }
+
+        private void OnClosed()
         {
             if (Solving) OnCancel();
         }
