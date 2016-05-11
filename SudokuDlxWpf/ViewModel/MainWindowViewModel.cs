@@ -86,7 +86,9 @@ namespace SudokuDlxWpf.ViewModel
             {
                 "DailyTelegraph27744.json",
                 "DailyTelegraph27808.json",
-                "DailyTelegraphWorldsHardestSudoku.json"
+                "DailyTelegraphWorldsHardestSudoku.json",
+                "ManchesterEveningNews06052016No1.json",
+                "ManchesterEveningNews06052016No2.json"
             };
 
             _puzzles = puzzleResourceNames

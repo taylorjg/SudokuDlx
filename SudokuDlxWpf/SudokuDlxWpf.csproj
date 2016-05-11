@@ -143,6 +143,8 @@
     <EmbeddedResource Include="SamplePuzzles\DailyTelegraph27744.json" />
     <EmbeddedResource Include="SamplePuzzles\DailyTelegraph27808.json" />
     <EmbeddedResource Include="SamplePuzzles\DailyTelegraphWorldsHardestSudoku.json" />
+    <EmbeddedResource Include="SamplePuzzles\ManchesterEveningNews06052016No1.json" />
+    <EmbeddedResource Include="SamplePuzzles\ManchesterEveningNews06052016No2.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
