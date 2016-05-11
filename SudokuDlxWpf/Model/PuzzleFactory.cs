@@ -11,13 +11,21 @@ namespace SudokuDlxWpf.Model
 {
     public static class PuzzleFactory
     {
-        public static Puzzle CreatePuzzleFromJsonResource(string resourceName)
+        public static IEnumerable<Puzzle> LoadSamplePuzzles()
+        {
+            return Assembly
+                .GetExecutingAssembly()
+                .GetManifestResourceNames()
+                .Where(resourceName => resourceName.StartsWith("SudokuDlxWpf.SamplePuzzles."))
+                .Select(CreatePuzzleFromJsonResource);
+        }
+
+        private static Puzzle CreatePuzzleFromJsonResource(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
-            string fullResourceName = $"SudokuDlxWpf.SamplePuzzles.{resourceName}";
-            using (var stream = assembly.GetManifestResourceStream(fullResourceName))
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
-                if (stream == null) throw new ApplicationException($"Failed to load resource {fullResourceName}");
+                if (stream == null) throw new ApplicationException($"Failed to load resource {resourceName}");
                 return CreatePuzzleFromStream(stream);
             }
         }

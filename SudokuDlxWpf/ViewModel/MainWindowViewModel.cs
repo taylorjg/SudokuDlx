@@ -37,6 +37,13 @@ namespace SudokuDlxWpf.ViewModel
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
         private int _searchStepCount;
 
+        public MainWindowViewModel(IBoardControl boardControl)
+        {
+            _boardControl = boardControl;
+            _timer.Tick += (_, __) => OnTick();
+            _puzzles = PuzzleFactory.LoadSamplePuzzles().ToImmutableList();
+        }
+
         private enum State
         {
             Clean,
@@ -75,29 +82,6 @@ namespace SudokuDlxWpf.ViewModel
             _messageQueue.Clear();
             _timer.Stop();
             SetState(State.Dirty);
-        }
-
-        public MainWindowViewModel(IBoardControl boardControl)
-        {
-            _boardControl = boardControl;
-            _timer.Tick += (_, __) => OnTick();
-
-            var puzzleResourceNames = new[]
-            {
-                "DailyTelegraph27744.json",
-                "DailyTelegraph27808.json",
-                "DailyTelegraphWorldsHardestSudoku.json",
-                "ManchesterEveningNews06052016No1.json",
-                "ManchesterEveningNews06052016No2.json"
-            };
-
-            _puzzles = puzzleResourceNames
-                .Select(PuzzleFactory.CreatePuzzleFromJsonResource)
-                .ToImmutableList();
-
-            SelectedPuzzle = _puzzles.First();
-            SpeedMilliseconds = 100;
-            SetStateClean();
         }
 
         public ICommand SolveCommand => _solveCommand ?? (_solveCommand = new RelayCommand(OnSolve, OnCanSolve));
@@ -150,6 +134,9 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnLoaded()
         {
+            SelectedPuzzle = _puzzles.First();
+            SpeedMilliseconds = 100;
+            SetStateClean();
             _boardControl.Initialise();
             _boardControl.AddInitialValues(SelectedPuzzle.InitialValues);
         }
