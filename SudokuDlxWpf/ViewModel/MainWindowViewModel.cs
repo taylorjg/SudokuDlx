@@ -17,7 +17,6 @@ namespace SudokuDlxWpf.ViewModel
     public class MainWindowViewModel : ViewModelBase
     {
         private readonly IBoardControl _boardControl;
-        private CancellationTokenSource _cancellationTokenSource;
         private RelayCommand _solveCommand;
         private RelayCommand _resetCommand;
         private RelayCommand _cancelCommand;
@@ -28,6 +27,7 @@ namespace SudokuDlxWpf.ViewModel
         private Puzzle _selectedPuzzle;
         private int _speedMilliseconds;
         private string _statusBarText;
+        private PuzzleSolverTask _puzzleSolverTask;
 
         private readonly DispatcherTimer _timer = new DispatcherTimer();
         private readonly Queue<Message> _messageQueue = new Queue<Message>();
@@ -65,7 +65,6 @@ namespace SudokuDlxWpf.ViewModel
 
         private void SetStateSolving()
         {
-            _cancellationTokenSource = new CancellationTokenSource();
             _currentInternalsRows.Clear();
             _messageQueue.Clear();
             _boardControl.RemoveDigits();
@@ -75,7 +74,6 @@ namespace SudokuDlxWpf.ViewModel
 
         private void SetStateDirty()
         {
-            _cancellationTokenSource = null;
             _messageQueue.Clear();
             _timer.Stop();
             SetState(State.Dirty);
@@ -91,9 +89,8 @@ namespace SudokuDlxWpf.ViewModel
         {
             SetStateSolving();
 
-            var puzzleSolverTask = new PuzzleSolverTask(
+            _puzzleSolverTask = new PuzzleSolverTask(
                 SelectedPuzzle,
-                _cancellationTokenSource.Token,
                 SynchronizationContext.Current,
                 OnSolutionFound,
                 OnNoSolutionFound,
@@ -117,7 +114,8 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnCancel()
         {
-            _cancellationTokenSource.Cancel();
+            _puzzleSolverTask.Cancel();
+
             if (_messageQueue.Any())
             {
                 var searchStepCount = _messageQueue.First().SearchStepCount;
@@ -127,6 +125,7 @@ namespace SudokuDlxWpf.ViewModel
             {
                 StatusBarText = "Cancelled";
             }
+
             SetStateDirty();
         }
 
@@ -339,7 +338,7 @@ namespace SudokuDlxWpf.ViewModel
         {
             public int SearchStepCount { get; }
 
-            public Message(int searchStepCount)
+            protected Message(int searchStepCount)
             {
                 SearchStepCount = searchStepCount;
             }
