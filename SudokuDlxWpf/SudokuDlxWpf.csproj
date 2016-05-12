@@ -103,10 +103,14 @@
     <Compile Include="Model\InternalRow.cs" />
     <Compile Include="Model\PuzzleFactory.cs" />
     <Compile Include="Model\Puzzle.cs" />
-    <Compile Include="ValueConverters\Fred.cs" />
+    <Compile Include="ValueConverters\InvertBoolConverter.cs" />
     <Compile Include="ViewModel\MainWindowViewModel.cs" />
+    <Compile Include="ViewModel\NoSolutionFoundEventArgs.cs" />
     <Compile Include="ViewModel\PuzzleSolver.cs" />
     <Compile Include="ViewModel\IBoardControl.cs" />
+    <Compile Include="ViewModel\PuzzleSolverTask.cs" />
+    <Compile Include="ViewModel\SearchStepEventArgs.cs" />
+    <Compile Include="ViewModel\SolutionFoundEventArgs.cs" />
     <Compile Include="View\BoardControl.xaml.cs">
       <DependentUpon>BoardControl.xaml</DependentUpon>
     </Compile>

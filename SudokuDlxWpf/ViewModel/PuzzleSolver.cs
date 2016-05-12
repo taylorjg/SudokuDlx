@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using DlxLib;
-using SudokuDlxWpf.Extensions;
 using SudokuDlxWpf.Model;
 
 namespace SudokuDlxWpf.ViewModel
@@ -13,50 +11,35 @@ namespace SudokuDlxWpf.ViewModel
     public class PuzzleSolver
     {
         private readonly Puzzle _puzzle;
-        private readonly Action<IImmutableList<InternalRow>> _onSolutionFound;
-        private readonly Action _onNoSolutionFound;
-        private readonly Action<IImmutableList<InternalRow>> _onSearchStep;
-        private readonly SynchronizationContext _synchronizationContext;
         private readonly CancellationToken _cancellationToken;
+        private int _searchStepCount;
 
-        public PuzzleSolver(
-            Puzzle puzzle,
-            Action<IImmutableList<InternalRow>> onSolutionFound,
-            Action onNoSolutionFound,
-            Action<IImmutableList<InternalRow>> onSearchStep,
-            SynchronizationContext synchronizationContext,
-            CancellationToken cancellationToken)
+        public PuzzleSolver(Puzzle puzzle, CancellationToken cancellationToken)
         {
             _puzzle = puzzle;
-            _onSolutionFound = onSolutionFound;
-            _onNoSolutionFound = onNoSolutionFound;
-            _onSearchStep = onSearchStep;
-            _synchronizationContext = synchronizationContext;
             _cancellationToken = cancellationToken;
         }
 
-        public void SolvePuzzle()
-        {
-            Task.Factory.StartNew(
-                SolvePuzzleInBackground,
-                _cancellationToken,
-                TaskCreationOptions.LongRunning,
-                TaskScheduler.Default);
-        }
+        public event EventHandler<SolutionFoundEventArgs> SolutionFound;
+        public event EventHandler<NoSolutionFoundEventArgs> NoSolutionFound;
+        public event EventHandler<SearchStepEventArgs> SearchStep;
 
-        private void SolvePuzzleInBackground()
+        public void Solve()
         {
             var internalRows = BuildInternalRows(_puzzle);
             var dlxRows = BuildDlxRows(internalRows);
 
             var dlx = new Dlx(_cancellationToken);
 
-            dlx.SearchStep += (_, searchStepEventArgs) =>
+            dlx.SearchStep += (_, args) =>
             {
-                var searchStepInternalRows = searchStepEventArgs.RowIndexes
+                _searchStepCount++;
+                var searchStepInternalRows = args.RowIndexes
                     .Select(rowIndex => internalRows[rowIndex])
                     .ToImmutableList();
-                _synchronizationContext.Post(_onSearchStep, searchStepInternalRows);
+                var eventArgs = new SearchStepEventArgs(_searchStepCount, searchStepInternalRows);
+                var handler = SearchStep;
+                handler?.Invoke(this, eventArgs);
             };
 
             var firstSolution = dlx.Solve(dlxRows, d => d, r => r).FirstOrDefault();
@@ -66,11 +49,15 @@ namespace SudokuDlxWpf.ViewModel
                 var solutionInternalRows = firstSolution.RowIndexes
                     .Select(rowIndex => internalRows[rowIndex])
                     .ToImmutableList();
-                _synchronizationContext.Post(_onSolutionFound, solutionInternalRows);
+                var eventArgs = new SolutionFoundEventArgs(_searchStepCount, solutionInternalRows);
+                var handler = SolutionFound;
+                handler?.Invoke(this, eventArgs);
             }
             else
             {
-                _synchronizationContext.Post(_onNoSolutionFound);
+                var eventArgs = new NoSolutionFoundEventArgs(_searchStepCount);
+                var handler = NoSolutionFound;
+                handler?.Invoke(this, eventArgs);
             }
         }
 

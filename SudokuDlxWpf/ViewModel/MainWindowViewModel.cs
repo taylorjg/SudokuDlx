@@ -14,7 +14,6 @@ using SudokuDlxWpf.Model;
 
 namespace SudokuDlxWpf.ViewModel
 {
-
     public class MainWindowViewModel : ViewModelBase
     {
         private readonly IBoardControl _boardControl;
@@ -35,7 +34,6 @@ namespace SudokuDlxWpf.ViewModel
         private readonly List<InternalRow> _currentInternalsRows = new List<InternalRow>();
         private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
-        private int _searchStepCount;
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
@@ -70,7 +68,6 @@ namespace SudokuDlxWpf.ViewModel
             _cancellationTokenSource = new CancellationTokenSource();
             _currentInternalsRows.Clear();
             _messageQueue.Clear();
-            _searchStepCount = 0;
             _boardControl.RemoveDigits();
             ClearStatusBarText();
             SetState(State.Solving);
@@ -94,15 +91,13 @@ namespace SudokuDlxWpf.ViewModel
         {
             SetStateSolving();
 
-            var puzzleSolver = new PuzzleSolver(
+            var puzzleSolverTask = new PuzzleSolverTask(
                 SelectedPuzzle,
+                _cancellationTokenSource.Token,
+                SynchronizationContext.Current,
                 OnSolutionFound,
                 OnNoSolutionFound,
-                OnSearchStep,
-                SynchronizationContext.Current,
-                _cancellationTokenSource.Token);
-
-            puzzleSolver.SolvePuzzle();
+                OnSearchStep);
         }
 
         private bool OnCanSolve()
@@ -123,8 +118,16 @@ namespace SudokuDlxWpf.ViewModel
         private void OnCancel()
         {
             _cancellationTokenSource.Cancel();
+            if (_messageQueue.Any())
+            {
+                var searchStepCount = _messageQueue.First().SearchStepCount;
+                StatusBarText = $"Cancelled after {searchStepCount} search steps";
+            }
+            else
+            {
+                StatusBarText = "Cancelled";
+            }
             SetStateDirty();
-            StatusBarText = $"Cancelled after {_searchStepCount} search steps";
         }
 
         private bool OnCanCancel()
@@ -193,25 +196,22 @@ namespace SudokuDlxWpf.ViewModel
             _cancelCommand?.RaiseCanExecuteChanged();
         }
 
-        private void OnSearchStep(IImmutableList<InternalRow> internalRows)
+        private void OnSolutionFound(int searchStepCount, IImmutableList<InternalRow> internalRows)
         {
             var filteredInternalRows = FilterOutInitialValues(internalRows);
+            EnqueueMessage(new SolutionFoundMessage(searchStepCount, filteredInternalRows));
+        }
 
+        private void OnNoSolutionFound(int searchStepCount)
+        {
+            EnqueueMessage(new NoSolutionFoundMessage(searchStepCount));
+        }
+
+        private void OnSearchStep(int searchStepCount, IImmutableList<InternalRow> internalRows)
+        {
+            var filteredInternalRows = FilterOutInitialValues(internalRows);
             if (filteredInternalRows.Any())
-                EnqueueMessage(new SearchStepMessage(filteredInternalRows));
-            else
-                _searchStepCount++;
-        }
-
-        private void OnSolutionFound(IImmutableList<InternalRow> internalRows)
-        {
-            var filteredInternalRows = FilterOutInitialValues(internalRows);
-            EnqueueMessage(new SolutionFoundMessage(filteredInternalRows));
-        }
-
-        private void OnNoSolutionFound()
-        {
-            EnqueueMessage(new NoSolutionFoundMessage());
+                EnqueueMessage(new SearchStepMessage(searchStepCount, filteredInternalRows));
         }
 
         private static IImmutableList<InternalRow> FilterOutInitialValues(IEnumerable<InternalRow> internalRows)
@@ -233,48 +233,47 @@ namespace SudokuDlxWpf.ViewModel
 
         private void DispatchMessage(Message message)
         {
-            var searchStepMessage = message as SearchStepMessage;
-            if (searchStepMessage != null)
-            {
-                OnSearchStepMessage(searchStepMessage.InternalRows);
-                return;
-            }
-
             var solutionFoundMessage = message as SolutionFoundMessage;
             if (solutionFoundMessage != null)
             {
-                OnSolutionFoundMessage(solutionFoundMessage.InternalRows);
+                OnSolutionFoundMessage(solutionFoundMessage);
                 return;
             }
 
             var noSolutionFoundMessage = message as NoSolutionFoundMessage;
             if (noSolutionFoundMessage != null)
             {
-                OnNoSolutionFoundMessage();
+                OnNoSolutionFoundMessage(noSolutionFoundMessage);
+                return;
+            }
+
+            var searchStepMessage = message as SearchStepMessage;
+            if (searchStepMessage != null)
+            {
+                OnSearchStepMessage(searchStepMessage);
                 return;
             }
 
             throw new ApplicationException($"Unknown message type, {message.GetType().FullName}");
         }
 
-        private void OnSearchStepMessage(IImmutableList<InternalRow> internalRows)
+        private void OnSolutionFoundMessage(SolutionFoundMessage message)
         {
-            AdjustDisplayedDigits(internalRows);
-            _searchStepCount++;
-        }
-
-        private void OnSolutionFoundMessage(IImmutableList<InternalRow> internalRows)
-        {
-            AdjustDisplayedDigits(internalRows);
-            StatusBarText = $"Solution found after {_searchStepCount} search steps";
+            AdjustDisplayedDigits(message.InternalRows);
+            StatusBarText = $"Solution found after {message.SearchStepCount} search steps";
             SetStateDirty();
         }
 
-        private void OnNoSolutionFoundMessage()
+        private void OnNoSolutionFoundMessage(NoSolutionFoundMessage message)
         {
             _boardControl.RemoveDigits();
-            StatusBarText = $"No solution found after {_searchStepCount} search steps";
+            StatusBarText = $"No solution found after {message.SearchStepCount} search steps";
             SetStateDirty();
+        }
+
+        private void OnSearchStepMessage(SearchStepMessage message)
+        {
+            AdjustDisplayedDigits(message.InternalRows);
         }
 
         private void AdjustDisplayedDigits(IImmutableList<InternalRow> newInternalRows)
@@ -338,13 +337,20 @@ namespace SudokuDlxWpf.ViewModel
 
         private abstract class Message
         {
+            public int SearchStepCount { get; }
+
+            public Message(int searchStepCount)
+            {
+                SearchStepCount = searchStepCount;
+            }
         }
 
         private class SearchStepMessage : Message
         {
             public IImmutableList<InternalRow> InternalRows { get; }
 
-            public SearchStepMessage(IImmutableList<InternalRow> internalRows)
+            public SearchStepMessage(int searchStepCount, IImmutableList<InternalRow> internalRows)
+                 : base(searchStepCount)
             {
                 InternalRows = internalRows;
             }
@@ -354,7 +360,8 @@ namespace SudokuDlxWpf.ViewModel
         {
             public IImmutableList<InternalRow> InternalRows { get; }
 
-            public SolutionFoundMessage(IImmutableList<InternalRow> internalRows)
+            public SolutionFoundMessage(int searchStepCount, IImmutableList<InternalRow> internalRows)
+                 : base(searchStepCount)
             {
                 InternalRows = internalRows;
             }
@@ -362,6 +369,10 @@ namespace SudokuDlxWpf.ViewModel
 
         private class NoSolutionFoundMessage : Message
         {
+            public NoSolutionFoundMessage(int searchStepCount)
+                : base(searchStepCount)
+            {
+            }
         }
     }
 }
