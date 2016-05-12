@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using System.Windows.Input;
 using System.Windows.Threading;
 using GalaSoft.MvvmLight;
@@ -27,13 +26,13 @@ namespace SudokuDlxWpf.ViewModel
         private Puzzle _selectedPuzzle;
         private int _speedMilliseconds;
         private string _statusBarText;
-        private PuzzleSolverTask _puzzleSolverTask;
 
         private readonly DispatcherTimer _timer = new DispatcherTimer();
         private readonly Queue<Message> _messageQueue = new Queue<Message>();
         private readonly List<InternalRow> _currentInternalsRows = new List<InternalRow>();
         private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
+        private PuzzleSolverTask _puzzleSolverTask;
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
@@ -91,7 +90,6 @@ namespace SudokuDlxWpf.ViewModel
 
             _puzzleSolverTask = new PuzzleSolverTask(
                 SelectedPuzzle,
-                SynchronizationContext.Current,
                 OnSolutionFound,
                 OnNoSolutionFound,
                 OnSearchStep);

@@ -10,24 +10,23 @@ namespace SudokuDlxWpf.ViewModel
     public class PuzzleSolverTask
     {
         private readonly Puzzle _puzzle;
-        private readonly SynchronizationContext _synchronizationContext;
         private readonly Action<int, IImmutableList<InternalRow>> _onSolutionFound;
         private readonly Action<int> _onNoSolutionFound;
         private readonly Action<int, IImmutableList<InternalRow>> _onSearchStep;
+        private readonly SynchronizationContext _synchronizationContext;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         public PuzzleSolverTask(
             Puzzle puzzle,
-            SynchronizationContext synchronizationContext,
             Action<int, IImmutableList<InternalRow>> onSolutionFound,
             Action<int> onNoSolutionFound,
             Action<int, IImmutableList<InternalRow>> onSearchStep)
         {
             _puzzle = puzzle;
-            _synchronizationContext = synchronizationContext;
             _onSolutionFound = onSolutionFound;
             _onNoSolutionFound = onNoSolutionFound;
             _onSearchStep = onSearchStep;
+            _synchronizationContext = SynchronizationContext.Current;
             _cancellationTokenSource = new CancellationTokenSource();
 
             Task.Factory.StartNew(
