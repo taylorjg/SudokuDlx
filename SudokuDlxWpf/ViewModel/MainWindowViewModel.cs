@@ -26,13 +26,13 @@ namespace SudokuDlxWpf.ViewModel
         private Puzzle _selectedPuzzle;
         private int _speedMilliseconds;
         private string _statusBarText;
+        private PuzzleSolverTask _puzzleSolverTask;
 
         private readonly DispatcherTimer _timer = new DispatcherTimer();
         private readonly Queue<Message> _messageQueue = new Queue<Message>();
         private readonly List<InternalRow> _currentInternalsRows = new List<InternalRow>();
         private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
-        private PuzzleSolverTask _puzzleSolverTask;
 
         public MainWindowViewModel(IBoardControl boardControl)
         {
@@ -89,10 +89,11 @@ namespace SudokuDlxWpf.ViewModel
             SetStateSolving();
 
             _puzzleSolverTask = new PuzzleSolverTask(
-                SelectedPuzzle,
                 OnSolutionFound,
                 OnNoSolutionFound,
                 OnSearchStep);
+
+            _puzzleSolverTask.Solve(SelectedPuzzle);
         }
 
         private bool OnCanSolve()
@@ -143,7 +144,10 @@ namespace SudokuDlxWpf.ViewModel
 
         private void OnClosed()
         {
-            if (Solving) OnCancel();
+            if (Solving)
+            {
+                OnCancel();
+            }
         }
 
         public bool Solving => _state == State.Solving;

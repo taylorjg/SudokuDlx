@@ -9,7 +9,6 @@ namespace SudokuDlxWpf.ViewModel
 {
     public class PuzzleSolverTask
     {
-        private readonly Puzzle _puzzle;
         private readonly Action<int, IImmutableList<InternalRow>> _onSolutionFound;
         private readonly Action<int> _onNoSolutionFound;
         private readonly Action<int, IImmutableList<InternalRow>> _onSearchStep;
@@ -17,20 +16,23 @@ namespace SudokuDlxWpf.ViewModel
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         public PuzzleSolverTask(
-            Puzzle puzzle,
             Action<int, IImmutableList<InternalRow>> onSolutionFound,
             Action<int> onNoSolutionFound,
             Action<int, IImmutableList<InternalRow>> onSearchStep)
         {
-            _puzzle = puzzle;
             _onSolutionFound = onSolutionFound;
             _onNoSolutionFound = onNoSolutionFound;
             _onSearchStep = onSearchStep;
+
             _synchronizationContext = SynchronizationContext.Current;
             _cancellationTokenSource = new CancellationTokenSource();
+        }
 
+        public void Solve(Puzzle puzzle)
+        {
             Task.Factory.StartNew(
                 SolvePuzzleInBackground,
+                puzzle,
                 _cancellationTokenSource.Token,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default);
@@ -41,9 +43,11 @@ namespace SudokuDlxWpf.ViewModel
             _cancellationTokenSource.Cancel();
         }
 
-        private void SolvePuzzleInBackground()
+        private void SolvePuzzleInBackground(object state)
         {
-            var puzzleSolver = new PuzzleSolver(_puzzle, _cancellationTokenSource.Token);
+            var puzzle = (Puzzle) state;
+
+            var puzzleSolver = new PuzzleSolver(puzzle, _cancellationTokenSource.Token);
 
             puzzleSolver.SolutionFound += (_, args) =>
                 _synchronizationContext.Post(_onSolutionFound, args.SearchStepCount, args.InternalRows);
