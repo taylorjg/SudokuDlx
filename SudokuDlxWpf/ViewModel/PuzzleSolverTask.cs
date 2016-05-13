@@ -13,7 +13,7 @@ namespace SudokuDlxWpf.ViewModel
         private readonly Action<int> _onNoSolutionFound;
         private readonly Action<int, IImmutableList<InternalRow>> _onSearchStep;
         private readonly SynchronizationContext _synchronizationContext;
-        private readonly CancellationTokenSource _cancellationTokenSource;
+        private CancellationTokenSource _cancellationTokenSource;
 
         public PuzzleSolverTask(
             Action<int, IImmutableList<InternalRow>> onSolutionFound,
@@ -23,13 +23,13 @@ namespace SudokuDlxWpf.ViewModel
             _onSolutionFound = onSolutionFound;
             _onNoSolutionFound = onNoSolutionFound;
             _onSearchStep = onSearchStep;
-
             _synchronizationContext = SynchronizationContext.Current;
-            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         public void Solve(Puzzle puzzle)
         {
+            _cancellationTokenSource = new CancellationTokenSource();
+
             Task.Factory.StartNew(
                 SolvePuzzleInBackground,
                 puzzle,
@@ -40,7 +40,7 @@ namespace SudokuDlxWpf.ViewModel
 
         public void Cancel()
         {
-            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource?.Cancel();
         }
 
         private void SolvePuzzleInBackground(object state)

@@ -16,17 +16,17 @@ namespace SudokuDlxWpf.ViewModel
     public class MainWindowViewModel : ViewModelBase
     {
         private readonly IBoardControl _boardControl;
+        private readonly IImmutableList<Puzzle> _puzzles;
+        private readonly PuzzleSolverTask _puzzleSolverTask;
         private RelayCommand _solveCommand;
         private RelayCommand _resetCommand;
         private RelayCommand _cancelCommand;
         private RelayCommand _loadedCommand;
         private RelayCommand _closedCommand;
         private State _state;
-        private readonly IImmutableList<Puzzle> _puzzles;
         private Puzzle _selectedPuzzle;
         private int _speedMilliseconds;
         private string _statusBarText;
-        private PuzzleSolverTask _puzzleSolverTask;
 
         private readonly DispatcherTimer _timer = new DispatcherTimer();
         private readonly Queue<Message> _messageQueue = new Queue<Message>();
@@ -39,6 +39,10 @@ namespace SudokuDlxWpf.ViewModel
             _boardControl = boardControl;
             _timer.Tick += (_, __) => OnTick();
             _puzzles = PuzzleFactory.LoadSamplePuzzles().ToImmutableList();
+            _puzzleSolverTask = new PuzzleSolverTask(
+                OnSolutionFound,
+                OnNoSolutionFound,
+                OnSearchStep);
         }
 
         private enum State
@@ -87,12 +91,6 @@ namespace SudokuDlxWpf.ViewModel
         private void OnSolve()
         {
             SetStateSolving();
-
-            _puzzleSolverTask = new PuzzleSolverTask(
-                OnSolutionFound,
-                OnNoSolutionFound,
-                OnSearchStep);
-
             _puzzleSolverTask.Solve(SelectedPuzzle);
         }
 
