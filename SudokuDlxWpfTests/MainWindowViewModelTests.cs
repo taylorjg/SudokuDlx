@@ -7,14 +7,18 @@ namespace SudokuDlxWpfTests
     [TestFixture]
     public class MainWindowViewModelTests
     {
-        private Mock<IBoardControl> _boardControlMock;
+        private Mock<IBoardControl> _mockBoardControl;
         private MainWindowViewModel _vm;
+        private MockPuzzleSolverTaskFactory _mockPuzzleSolverTaskFactory;
 
         [SetUp]
         public void SetUp()
         {
-            _boardControlMock = new Mock<IBoardControl>();
-            _vm = new MainWindowViewModel(_boardControlMock.Object);
+            _mockBoardControl = new Mock<IBoardControl>();
+            _mockPuzzleSolverTaskFactory = new MockPuzzleSolverTaskFactory();
+            _vm = new MainWindowViewModel(
+                _mockBoardControl.Object,
+                _mockPuzzleSolverTaskFactory);
             _vm.LoadedCommand.Execute(null);
         }
 

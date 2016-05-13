@@ -7,7 +7,7 @@ using SudokuDlxWpf.Extensions;
 
 namespace SudokuDlxWpf.ViewModel
 {
-    public class PuzzleSolverTask
+    public class PuzzleSolverTask : IPuzzleSolverTask
     {
         private readonly Action<int, IImmutableList<InternalRow>> _onSolutionFound;
         private readonly Action<int> _onNoSolutionFound;

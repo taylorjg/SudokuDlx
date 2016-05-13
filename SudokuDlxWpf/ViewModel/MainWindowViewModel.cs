@@ -17,7 +17,7 @@ namespace SudokuDlxWpf.ViewModel
     {
         private readonly IBoardControl _boardControl;
         private readonly IImmutableList<Puzzle> _puzzles;
-        private readonly PuzzleSolverTask _puzzleSolverTask;
+        private readonly IPuzzleSolverTask _puzzleSolverTask;
         private RelayCommand _solveCommand;
         private RelayCommand _resetCommand;
         private RelayCommand _cancelCommand;
@@ -34,12 +34,12 @@ namespace SudokuDlxWpf.ViewModel
         private readonly SameCoordsComparer _sameCoordsComparer = new SameCoordsComparer();
         private readonly SameCoordsDifferentValueComparer _sameCoordsDifferentValueComparer = new SameCoordsDifferentValueComparer();
 
-        public MainWindowViewModel(IBoardControl boardControl)
+        public MainWindowViewModel(IBoardControl boardControl, IPuzzleSolverTaskFactory puzzleSolverTaskFactory)
         {
             _boardControl = boardControl;
             _timer.Tick += (_, __) => OnTick();
             _puzzles = PuzzleFactory.LoadSamplePuzzles().ToImmutableList();
-            _puzzleSolverTask = new PuzzleSolverTask(
+            _puzzleSolverTask = puzzleSolverTaskFactory.Create(
                 OnSolutionFound,
                 OnNoSolutionFound,
                 OnSearchStep);
