@@ -1,6 +1,5 @@
-﻿using System.Collections.Immutable;
-using System.Linq;
-using System.Threading;
+﻿using System;
+using System.Collections.Immutable;
 using Moq;
 using NUnit.Framework;
 using SudokuDlxWpf.Model;
@@ -93,7 +92,7 @@ namespace SudokuDlxWpfTests
         }
 
         [Test]
-        public void SearchStepCausesDigitsToBeAdded()
+        public void OneSearchStepCausesDigitsToBeAdded()
         {
             _mockBoardControl.Reset();
 
@@ -107,8 +106,87 @@ namespace SudokuDlxWpfTests
 
             _mockTimer.FlushTicks(1);
 
-            _mockBoardControl.Verify(m => m.AddDigit(internalRow1.Coords, internalRow1.Value));
-            _mockBoardControl.Verify(m => m.AddDigit(internalRow2.Coords, internalRow2.Value));
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow1.Coords, internalRow1.Value), Times.Once);
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow2.Coords, internalRow2.Value), Times.Once);
+        }
+
+        [Test]
+        public void TwoSearchStepsCausesSomeDigitsToBeRemoved()
+        {
+            _mockBoardControl.Reset();
+
+            var internalRow1 = new InternalRow(new Coords(0, 0), 1, false);
+            var internalRow2 = new InternalRow(new Coords(2, 3), 5, false);
+            var internalRows1 = ImmutableList.Create(internalRow1, internalRow2);
+            _mockPuzzleSolverTask.AddSearchStepCall(1, internalRows1);
+
+            var internalRows2 = ImmutableList.Create(internalRow1);
+            _mockPuzzleSolverTask.AddSearchStepCall(2, internalRows2);
+
+            Assert.That(_vm.SolveCommand.CanExecute(null), Is.True);
+            _vm.SolveCommand.Execute(null);
+
+            _mockTimer.FlushTicks(2);
+
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow1.Coords, internalRow1.Value), Times.Once);
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow2.Coords, internalRow2.Value), Times.Once);
+            _mockBoardControl.Verify(m => m.RemoveDigit(internalRow2.Coords), Times.Once);
+        }
+
+        [Test]
+        public void TwoSearchStepsCausesOnlyNewDigitsToBeAdded()
+        {
+            _mockBoardControl.Reset();
+
+            var internalRow1 = new InternalRow(new Coords(0, 0), 1, false);
+            var internalRow2 = new InternalRow(new Coords(2, 3), 5, false);
+            var internalRows1 = ImmutableList.Create(internalRow1, internalRow2);
+            _mockPuzzleSolverTask.AddSearchStepCall(1, internalRows1);
+
+            var internalRow3 = new InternalRow(new Coords(4, 3), 6, false);
+            var internalRows2 = ImmutableList.Create(internalRow3);
+            _mockPuzzleSolverTask.AddSearchStepCall(2, internalRows2);
+
+            Assert.That(_vm.SolveCommand.CanExecute(null), Is.True);
+            _vm.SolveCommand.Execute(null);
+
+            _mockTimer.FlushTicks(2);
+
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow1.Coords, internalRow1.Value), Times.Once);
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow2.Coords, internalRow2.Value), Times.Once);
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow3.Coords, internalRow3.Value), Times.Once);
+        }
+
+        [Test]
+        public void TwoSearchStepsCausesSomeDigitsToBeChanged()
+        {
+            _mockBoardControl.Reset();
+
+            var internalRow1 = new InternalRow(new Coords(0, 0), 1, false);
+            var internalRow2 = new InternalRow(new Coords(2, 3), 5, false);
+            var internalRows1 = ImmutableList.Create(internalRow1, internalRow2);
+            _mockPuzzleSolverTask.AddSearchStepCall(1, internalRows1);
+
+            var internalRow3 = new InternalRow(internalRow2.Coords, 6, false);
+            var internalRows2 = ImmutableList.Create(internalRow1, internalRow3);
+            _mockPuzzleSolverTask.AddSearchStepCall(2, internalRows2);
+
+            Assert.That(_vm.SolveCommand.CanExecute(null), Is.True);
+            _vm.SolveCommand.Execute(null);
+
+            _mockTimer.FlushTicks(2);
+
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow1.Coords, internalRow1.Value), Times.Once);
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow2.Coords, internalRow2.Value), Times.Once);
+            _mockBoardControl.Verify(m => m.RemoveDigit(internalRow3.Coords), Times.Once);
+            _mockBoardControl.Verify(m => m.AddDigit(internalRow3.Coords, internalRow3.Value), Times.Once);
+        }
+
+        [Test]
+        public void ChangingSpeedCausesTimerIntervalToBeUpdated()
+        {
+            _vm.SpeedMilliseconds = 50;
+            Assert.That(_mockTimer.Interval, Is.EqualTo(TimeSpan.FromMilliseconds(50)));
         }
     }
 }

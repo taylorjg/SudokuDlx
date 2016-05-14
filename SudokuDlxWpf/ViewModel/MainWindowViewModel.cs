@@ -288,7 +288,7 @@ namespace SudokuDlxWpf.ViewModel
                 .ToList()
                 .ForEach(AddInternalRow);
 
-            _currentInternalsRows.Intersect(newInternalRows, _sameCoordsDifferentValueComparer)
+            newInternalRows.Intersect(_currentInternalsRows, _sameCoordsDifferentValueComparer)
                 .ToList()
                 .ForEach(ChangeInternalRow);
         }
