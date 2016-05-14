@@ -73,7 +73,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainWindowViewModelTests.cs" />
+    <Compile Include="MockPuzzleSolverTask.cs" />
     <Compile Include="MockPuzzleSolverTaskFactory.cs" />
+    <Compile Include="MockTimer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -7,7 +7,10 @@ namespace SudokuDlxWpf.View
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainWindowViewModel(BoardControl, new PuzzleSolverTaskFactory());
+            DataContext = new MainWindowViewModel(
+                BoardControl,
+                new PuzzleSolverTaskFactory(),
+                new WpfTimer());
         }
     }
 }

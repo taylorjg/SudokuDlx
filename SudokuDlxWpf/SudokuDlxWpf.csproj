@@ -106,6 +106,7 @@
     <Compile Include="ValueConverters\InvertBoolConverter.cs" />
     <Compile Include="ViewModel\IPuzzleSolverTask.cs" />
     <Compile Include="ViewModel\IPuzzleSolverTaskFactory.cs" />
+    <Compile Include="ViewModel\ITimer.cs" />
     <Compile Include="ViewModel\MainWindowViewModel.cs" />
     <Compile Include="ViewModel\NoSolutionFoundEventArgs.cs" />
     <Compile Include="ViewModel\PuzzleSolver.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="ViewModel\PuzzleSolverTaskFactory.cs" />
     <Compile Include="ViewModel\SearchStepEventArgs.cs" />
     <Compile Include="ViewModel\SolutionFoundEventArgs.cs" />
+    <Compile Include="ViewModel\WpfTimer.cs" />
     <Compile Include="View\BoardControl.xaml.cs">
       <DependentUpon>BoardControl.xaml</DependentUpon>
     </Compile>
