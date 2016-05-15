@@ -183,6 +183,29 @@ namespace SudokuDlxWpfTests
         }
 
         [Test]
+        public void TwoSearchStepsInvolvingOnlyInitialValuesCausesNoBoardChanges()
+        {
+            _mockBoardControl.Reset();
+
+            var internalRow1 = new InternalRow(new Coords(0, 0), 1, true);
+            var internalRow2 = new InternalRow(new Coords(2, 3), 5, true);
+            var internalRows1 = ImmutableList.Create(internalRow1, internalRow2);
+            _mockPuzzleSolverTask.AddSearchStepCall(1, internalRows1);
+
+            var internalRow3 = new InternalRow(new Coords(4, 3), 6, true);
+            var internalRows2 = ImmutableList.Create(internalRow3);
+            _mockPuzzleSolverTask.AddSearchStepCall(2, internalRows2);
+
+            Assert.That(_vm.SolveCommand.CanExecute(null), Is.True);
+            _vm.SolveCommand.Execute(null);
+
+            _mockTimer.FlushTicks(2);
+
+            _mockBoardControl.Verify(m => m.AddDigit(It.IsAny<Coords>(), It.IsAny<int>()), Times.Never);
+            _mockBoardControl.Verify(m => m.RemoveDigit(It.IsAny<Coords>()), Times.Never);
+        }
+
+        [Test]
         public void ChangingSpeedCausesTimerIntervalToBeUpdated()
         {
             _vm.SpeedMilliseconds = 50;
