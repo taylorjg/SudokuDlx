@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using Moq;
 using NUnit.Framework;
 using SudokuDlxWpf.Model;
@@ -210,6 +212,23 @@ namespace SudokuDlxWpfTests
         {
             _vm.SpeedMilliseconds = 50;
             Assert.That(_mockTimer.Interval, Is.EqualTo(TimeSpan.FromMilliseconds(50)));
+        }
+
+        [Test]
+        public void ChangingSelectedPuzzleResetsTheBoard()
+        {
+            _mockBoardControl.Reset();
+            _vm.SelectedPuzzle = _vm.Puzzles.Last();
+            _mockBoardControl.Verify(m => m.Reset(), Times.Once);
+        }
+
+        [Test]
+        public void ChangingSelectedPuzzleAddsInitialValuesToTheBoard()
+        {
+            _mockBoardControl.Reset();
+            var newPuzzle = _vm.Puzzles.Last();
+            _vm.SelectedPuzzle = newPuzzle;
+            _mockBoardControl.Verify(m => m.AddInitialValues(newPuzzle.InitialValues), Times.Once);
         }
     }
 }
